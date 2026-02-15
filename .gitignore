@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Build outputs
+/build
+/dist
+.next/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Temporary
+.cache/
+temp/
+tmp/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Flutter specific
+.packages
+flutter_*.json
+GeneratedPluginRegistrant.java
+
+# Backend builds
+.next
+out
+
+# Supabase
+# Keep your local supabase files private
+.supabase/
+
+# Testing
+coverage/
+.nyc_output/
