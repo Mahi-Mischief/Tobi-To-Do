@@ -1,0 +1,68 @@
+name: tobi_todo
+description: AI-powered personal assistant and life planner - Flutter frontend.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  # Firebase
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.16.0
+  firebase_messaging: ^14.7.0
+
+  # Networking & HTTP
+  http: ^1.1.0
+  dio: ^5.3.0
+
+  # Local Storage
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.2
+
+  # UI & Design
+  google_fonts: ^6.0.0
+  flutter_svg: ^2.0.0
+  intl: ^0.19.0
+  shimmer: ^3.0.0
+
+  # Navigation
+  go_router: ^12.0.0
+
+  # Utilities
+  uuid: ^4.0.0
+  logger: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+  riverpod_generator: ^2.3.0
+  build_runner: ^2.4.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/lottie/
+
+  # Custom fonts will be added when available
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Poppins-SemiBold.ttf
+  #         weight: 600
