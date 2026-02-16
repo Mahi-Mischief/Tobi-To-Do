@@ -79,25 +79,29 @@ class LeaderboardEntry {
 
 // Provider for gamification stats
 final gamificationStatsProvider = FutureProvider<GamificationStats>((ref) async {
-  final response = await ApiClient.get('/gamification/stats');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/gamification/stats');
   return GamificationStats.fromJson(response);
 });
 
 // Provider for user achievements
 final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
-  final response = await ApiClient.get('/gamification/achievements');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/gamification/achievements');
   return (response as List).map((e) => Achievement.fromJson(e)).toList();
 });
 
 // Provider for user rank
 final userRankProvider = FutureProvider<int>((ref) async {
-  final response = await ApiClient.get('/gamification/rank');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/gamification/rank');
   return response['rank'] ?? 0;
 });
 
 // Provider for leaderboard
 final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
-  final response = await ApiClient.get('/gamification/leaderboard');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/gamification/leaderboard');
   return (response as List).map((e) => LeaderboardEntry.fromJson(e)).toList();
 });
 

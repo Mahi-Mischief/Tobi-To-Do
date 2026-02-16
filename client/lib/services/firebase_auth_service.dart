@@ -4,20 +4,46 @@ import 'package:flutter/foundation.dart';
 /// Firebase Authentication Service
 /// Handles user registration, login, logout, and session management
 class FirebaseAuthService {
-  static final FirebaseAuthService _instance = FirebaseAuthService._internal();
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  static FirebaseAuthService? _instance;
+  late final FirebaseAuth _firebaseAuth;
+  final bool _isDummy;
 
-  factory FirebaseAuthService() {
-    return _instance;
+  factory FirebaseAuthService({bool isDummy = false}) {
+    if (isDummy) {
+      return FirebaseAuthService._dummy();
+    }
+    _instance ??= FirebaseAuthService._internal();
+    return _instance!;
   }
 
-  FirebaseAuthService._internal();
+  FirebaseAuthService._internal()
+      : _isDummy = false,
+        _firebaseAuth = FirebaseAuth.instance;
+
+  // Dummy constructor for web platform (doesn't initialize Firebase)
+  FirebaseAuthService._dummy()
+      : _isDummy = true,
+        _firebaseAuth = FirebaseAuth.instance;
+
+  /// Get FirebaseAuth instance for direct access
+  FirebaseAuth get firebaseAuth {
+    if (_isDummy) {
+      throw Exception('Firebase Auth is not available on web platform. Use API authentication instead.');
+    }
+    return _firebaseAuth;
+  }
 
   /// Get current authenticated user
-  User? get currentUser => _firebaseAuth.currentUser;
+  User? get currentUser {
+    if (_isDummy) return null;
+    return _firebaseAuth.currentUser;
+  }
 
   /// Stream of authentication state changes
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  Stream<User?> get authStateChanges {
+    if (_isDummy) return const Stream.empty();
+    return _firebaseAuth.authStateChanges();
+  }
 
   /// Register with email and password
   Future<UserCredential> registerWithEmail({

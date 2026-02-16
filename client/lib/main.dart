@@ -1,27 +1,35 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_theme.dart';
 import 'package:tobi_todo/features/auth/screens/login_screen.dart';
 import 'package:tobi_todo/features/dashboard/screens/dashboard_screen.dart';
 import 'package:tobi_todo/features/plan/screens/plan_screen.dart';
-import 'package:tobi_todo/features/focus/screens/focus_screen.dart';
+import 'package:tobi_todo/features/focus/screens/focus_screen_clean.dart' as focus_clean;
 import 'package:tobi_todo/features/growth/screens/growth_screen.dart';
 import 'package:tobi_todo/features/profile/screens/profile_screen.dart';
+import 'package:tobi_todo/features/shared/widgets/tobi_ai_assistant.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
 import 'package:tobi_todo/services/firebase_options.dart' as fb_options;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp(
-      options: fb_options.DefaultFirebaseOptions.currentPlatform,
-    );
-    debugPrint('✅ Firebase initialized successfully');
-  } catch (e) {
-    debugPrint('❌ Firebase initialization error: $e');
+  // Only initialize Firebase on native platforms (not web)
+  if (!kIsWeb) {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: fb_options.DefaultFirebaseOptions.currentPlatform,
+        );
+        debugPrint('✅ Firebase initialized (native platform)');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Firebase init error (will use API auth): $e');
+    }
+  } else {
+    debugPrint('✅ Web platform - using API authentication');
   }
   
   runApp(const ProviderScope(child: MyApp()));
@@ -32,8 +40,8 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch auth state - redirect based on login status
-    final authState = ref.watch(authStateProvider);
+    // Watch auth state from authProvider (StateNotifier) instead of Firebase stream
+    final authState = ref.watch(authProvider);
 
     return MaterialApp(
       title: 'Tobi To-Do',
@@ -47,7 +55,28 @@ class MyApp extends ConsumerWidget {
         loading: () => Scaffold(
           body: Container(
             alignment: Alignment.center,
-            child: const CircularProgressIndicator(),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.blue.shade900, Colors.blue.shade600],
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 24),
+                const Text(
+                  'Loading Tobi To-Do...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         error: (error, stackTrace) {
@@ -73,7 +102,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const PlanScreen(),
-    const FocusScreen(),
+    const focus_clean.FocusScreen(),
     const GrowthScreen(),
     const ProfileScreen(),
   ];
@@ -81,7 +110,12 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: Stack(
+        children: [
+          _screens[_selectedIndex],
+          const TobiAIAssistant(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

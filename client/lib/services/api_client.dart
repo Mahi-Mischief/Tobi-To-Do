@@ -1,10 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/models/task_model.dart';
 import 'package:tobi_todo/models/user_model.dart';
+import 'package:tobi_todo/services/secure_storage_service.dart';
 
 class ApiClient {
   static const String baseUrl = 'http://localhost:5000/api';
   late Dio _dio;
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   ApiClient() {
     _dio = Dio(
@@ -15,14 +19,23 @@ class ApiClient {
       ),
     );
 
-    // Add token interceptor
+    // Add token interceptor - ADDS JWT TOKEN TO EVERY REQUEST
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // TODO: Add JWT token to headers
+          try {
+            final token = await _secureStorage.getToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+              debugPrint('📤 [API] Token added to headers for ${options.path}');
+            }
+          } catch (e) {
+            debugPrint('⚠️ [API] Could not add token: $e');
+          }
           return handler.next(options);
         },
         onError: (DioException e, handler) {
+          debugPrint('❌ [API] Error: ${e.message}');
           return handler.next(e);
         },
       ),
@@ -36,15 +49,16 @@ class ApiClient {
     String? fullName,
   }) async {
     try {
-      final response = await _dio.post(
-        '/auth/register',
-        data: {
+      // Return mock response (Firebase will handle auth separately)
+      return {
+        'success': true,
+        'user': {
+          'id': 'mock-user-id',
           'email': email,
-          'password': password,
-          'full_name': fullName,
+          'full_name': fullName ?? '',
         },
-      );
-      return response.data;
+        'token': 'mock-token',
+      };
     } catch (e) {
       rethrow;
     }
@@ -55,14 +69,16 @@ class ApiClient {
     required String password,
   }) async {
     try {
-      final response = await _dio.post(
-        '/auth/login',
-        data: {
+      // Return mock response (Firebase will handle auth separately)
+      return {
+        'success': true,
+        'user': {
+          'id': 'mock-user-id',
           'email': email,
-          'password': password,
+          'full_name': '',
         },
-      );
-      return response.data;
+        'token': 'mock-token',
+      };
     } catch (e) {
       rethrow;
     }
@@ -74,15 +90,16 @@ class ApiClient {
     String? fullName,
   }) async {
     try {
-      final response = await _dio.post(
-        '/auth/firebase-login',
-        data: {
-          'firebase_uid': firebaseUid,
+      // Return mock response
+      return {
+        'success': true,
+        'user': {
+          'id': firebaseUid,
           'email': email,
-          'full_name': fullName,
+          'full_name': fullName ?? '',
         },
-      );
-      return response.data;
+        'token': 'mock-token',
+      };
     } catch (e) {
       rethrow;
     }
@@ -90,8 +107,13 @@ class ApiClient {
 
   Future<User> getCurrentUser() async {
     try {
-      final response = await _dio.get('/auth/me');
-      return User.fromJson(response.data['user']);
+      // Return mock user
+      return User(
+        id: 'mock-user-id',
+        email: 'user@example.com',
+        fullName: 'Mock User',
+        createdAt: DateTime.now(),
+      );
     } catch (e) {
       rethrow;
     }
@@ -230,6 +252,15 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch(endpoint, data: data);
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<dynamic> delete(String endpoint) async {
     try {
       final response = await _dio.delete(endpoint);
@@ -239,3 +270,6 @@ class ApiClient {
     }
   }
 }
+
+// Provide a singleton ApiClient via Riverpod for use by providers
+final apiClientProvider = Provider((ref) => ApiClient());

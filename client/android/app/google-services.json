@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "730780218273",
+    "project_id": "tobi-to-do",
+    "storage_bucket": "tobi-to-do.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730780218273:android:9b86d8d1eedb2be9d9d1e0",
+        "android_client_info": {
+          "package_name": "com.example.tobi_todo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730780218273-s4nmlgbornl6tvgehcnlmqjbprtq2kf2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOOdwAiLRdtYNONL3kNcafz07Hte_N7jg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730780218273-s4nmlgbornl6tvgehcnlmqjbprtq2kf2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

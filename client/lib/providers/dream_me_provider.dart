@@ -109,7 +109,8 @@ class DreamMeNotifier extends StateNotifier<DreamProfile?> {
   // Fetch dream profile
   Future<DreamProfile?> fetchProfile() async {
     try {
-      final response = await ApiClient.get('/dream-me/profile');
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/dream-me/profile');
       final profile = DreamProfile.fromJson(response);
       state = profile;
       return profile;
@@ -126,7 +127,8 @@ class DreamMeNotifier extends StateNotifier<DreamProfile?> {
     List<String>? identityStatements,
   }) async {
     try {
-      final response = await ApiClient.post('/dream-me/profile', {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/dream-me/profile', {
         'visionStatement': visionStatement,
         'coreValues': coreValues,
         'threeYearGoal': threeYearGoal,
@@ -148,30 +150,35 @@ final dreamMeProvider = StateNotifierProvider<DreamMeNotifier, DreamProfile?>((r
 
 // Provider for alignment score
 final alignmentScoreProvider = FutureProvider<AlignmentScore>((ref) async {
-  final response = await ApiClient.get('/dream-me/alignment');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/dream-me/alignment');
   return AlignmentScore.fromJson(response);
 });
 
 // Provider for gap analysis
 final gapAnalysisProvider = FutureProvider<GapAnalysis>((ref) async {
-  final response = await ApiClient.get('/dream-me/gaps');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/dream-me/gaps');
   return GapAnalysis.fromJson(response);
 });
 
 // Provider for reflections
 final reflectionsProvider = FutureProvider<List<Reflection>>((ref) async {
-  final response = await ApiClient.get('/dream-me/reflections');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/dream-me/reflections');
   return (response as List).map((e) => Reflection.fromJson(e)).toList();
 });
 
 // Provider for Dream Me insights (comprehensive dashboard)
 final dreamMeInsightsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  return await ApiClient.get('/dream-me/insights');
+  final api = ref.watch(apiClientProvider);
+  return await api.get('/dream-me/insights');
 });
 
 // Provider for milestone progress
 final milestoneProgressProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
-  return await ApiClient.get('/dream-me/milestones');
+  final api = ref.watch(apiClientProvider);
+  return await api.get('/dream-me/milestones');
 });
 
 // Derived provider for profile completion percentage

@@ -79,53 +79,62 @@ class EngagementMetrics {
 
 // Provider for analytics dashboard
 final analyticsDashboardProvider = FutureProvider<AnalyticsDashboard>((ref) async {
-  final response = await ApiClient.get('/analytics/dashboard');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/dashboard');
   return AnalyticsDashboard.fromJson(response);
 });
 
 // Provider for task completion rate
 final taskCompletionRateProvider = FutureProvider<int>((ref) async {
-  final response = await ApiClient.get('/analytics/completion-rate?days=30');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/completion-rate?days=30');
   return response['completionRate'] ?? 0;
 });
 
 // Provider for habit consistency
 final habitConsistencyAnalyticsProvider = FutureProvider<int>((ref) async {
-  final response = await ApiClient.get('/analytics/habit-consistency?days=7');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/habit-consistency?days=7');
   return response['consistency'] ?? 0;
 });
 
 // Provider for goal trends
 final goalTrendsProvider = FutureProvider<List<GoalTrend>>((ref) async {
-  final response = await ApiClient.get('/analytics/goal-trends?days=90');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/goal-trends?days=90');
   return (response as List).map((e) => GoalTrend.fromJson(e)).toList();
 });
 
 // Provider for engagement metrics
 final engagementMetricsProvider = FutureProvider<EngagementMetrics>((ref) async {
-  final response = await ApiClient.get('/analytics/engagement');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/engagement');
   return EngagementMetrics.fromJson(response);
 });
 
 // Provider for productivity heatmap
 final productivityHeatmapProvider = FutureProvider<List<List<int>>>((ref) async {
-  final response = await ApiClient.get('/analytics/productivity-heatmap?weeks=4');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/productivity-heatmap?weeks=4');
   final heatmap = response['heatmap'] as List;
   return heatmap.map((row) => List<int>.from(row as List)).toList();
 });
 
 // Provider for daily focus time
 final dailyFocusTimeProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final response = await ApiClient.get('/analytics/focus-time?days=30');
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/analytics/focus-time?days=30');
   return List<Map<String, dynamic>>.from(response);
 });
 
 // Provider for most productive time
 final mostProductiveTimeProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
-  return await ApiClient.get('/analytics/productive-time?days=30');
+  final api = ref.watch(apiClientProvider);
+  return await api.get('/analytics/productive-time?days=30');
 });
 
 // Provider for weekly summary
 final weeklySummaryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  return await ApiClient.get('/analytics/weekly-summary');
+  final api = ref.watch(apiClientProvider);
+  return await api.get('/analytics/weekly-summary');
 });

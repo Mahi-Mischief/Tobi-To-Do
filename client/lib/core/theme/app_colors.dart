@@ -10,7 +10,6 @@ class AppColors {
   static const Color lightBackground = Color(0xFFFAFAFA);
   static const Color lightSurface = Colors.white;
   static const Color lightText = Color(0xFF2D3436);
-  static const Color darkText = Color(0xFF2D3436);
   static const Color lightGray = Color(0xFFDFE6E9);
   static const Color lightBorder = Color(0xFFE0E0E0);
 
@@ -108,4 +107,27 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
   );
+}
+
+// Compatibility aliases used across the UI
+class AppText {
+  static const TextStyle heading2 = AppTypography.headlineMedium;
+  static const TextStyle heading3 = AppTypography.headlineSmall;
+  static const TextStyle heading1 = AppTypography.headlineLarge;
+  static const TextStyle bodyMedium = AppTypography.bodyMedium;
+  static const TextStyle bodySmall = AppTypography.bodySmall;
+}
+
+class AppSpacing {
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 16.0;
+  static const double lg = 24.0;
+  static const double xl = 32.0;
+}
+
+class AppRadius {
+  static const double small = 8.0;
+  static const double medium = 12.0;
+  static const double large = 16.0;
 }

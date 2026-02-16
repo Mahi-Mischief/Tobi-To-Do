@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
+// Re-export common theme helpers so screens can import only `app_theme.dart`
+export 'app_colors.dart';
+
 class AppTheme {
   // Light Theme
   static ThemeData get lightTheme {
@@ -72,4 +75,10 @@ class AppTheme {
       ),
     );
   }
+
+  // Compatibility color getters used across older screens
+  static Color get primaryColor => AppColors.primary;
+  static Color get successColor => AppColors.success;
+  static Color get warningColor => AppColors.warning;
 }
+
