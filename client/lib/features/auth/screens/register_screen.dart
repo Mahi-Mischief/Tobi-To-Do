@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tobi_todo/core/theme/app_colors.dart';
+// removed unused import: app_colors
 import 'package:tobi_todo/main.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
+import 'package:tobi_todo/shared/widgets/tobi_widget.dart';
+// removed unused import: shared/providers/tobi_provider.dart
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
@@ -70,6 +73,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         fullName: _fullNameController.text.trim(),
       );
 
+      // Celebrate with Tobi briefly
+      try {
+        ref.read(tobiServiceProvider).celebrate();
+      } catch (_) {}
+
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainNavigation()),
@@ -78,6 +86,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
     } catch (e) {
       setState(() => _errorMessage = 'Registration failed: $e');
+      try {
+        ref.read(tobiServiceProvider).sad();
+      } catch (_) {}
       debugPrint('❌ Registration error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -98,22 +109,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Tobi Logo
-                    Container(
-                      height: 120,
-                      width: 120,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF6B5FFF), Color(0xFF5B4FEF)],
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '🤖',
-                          style: TextStyle(fontSize: 60),
+                    // Tobi Logo / animation
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: SizedBox(
+                          height: 120,
+                          width: 120,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Container(
+                              color: Colors.white,
+                              child: Center(
+                                child: TobiWidget(animationName: 'idle', size: 110, frameCount: 36, fps: 12),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -233,7 +244,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            onPressed: () {
+                            setState(() => _obscurePassword = !_obscurePassword);
+                            try {
+                              ref.read(tobiServiceProvider).think();
+                            } catch (_) {}
+                          },
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_off : Icons.visibility,
                             color: Color(0xFF8B92A9),
@@ -351,7 +367,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             child: Material(
                               color: Colors.white,
                               child: InkWell(
-                                onTap: () {},
+                                onTap: () {
+                                  try {
+                                    ref.read(tobiServiceProvider).wave();
+                                  } catch (_) {}
+                                },
                                 borderRadius: BorderRadius.circular(12),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -375,7 +395,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             child: Material(
                               color: Colors.white,
                               child: InkWell(
-                                onTap: () {},
+                                onTap: () {
+                                  try {
+                                    ref.read(tobiServiceProvider).think();
+                                  } catch (_) {}
+                                },
                                 borderRadius: BorderRadius.circular(12),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -401,8 +425,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           'Already have an account? ',
                           style: TextStyle(color: Color(0xFF8B92A9), fontSize: 14),
                         ),
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
+                          GestureDetector(
+                          onTap: () {
+                            try {
+                              ref.read(tobiServiceProvider).wave();
+                            } catch (_) {}
+                            Navigator.of(context).pop();
+                          },
                           child: Text(
                             'Log In',
                             style: TextStyle(

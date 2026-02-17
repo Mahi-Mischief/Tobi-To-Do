@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/shared/widgets/tobi_widget.dart';
+import 'package:tobi_todo/shared/providers/tobi_provider.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class TobiAIAssistant extends ConsumerStatefulWidget {
-  const TobiAIAssistant({Key? key}) : super(key: key);
+  const TobiAIAssistant({super.key});
 
   @override
   ConsumerState<TobiAIAssistant> createState() => _TobiAIAssistantState();
@@ -32,8 +35,12 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
   void _toggleAssistant() {
     setState(() {
       _isExpanded = !_isExpanded;
-      if (_isExpanded) {
+        if (_isExpanded) {
         _animationController.forward();
+        // play a small 'think' animation when opened via service
+        try {
+          ref.read(tobiServiceProvider).think();
+        } catch (_) {}
       } else {
         _animationController.reverse();
       }
@@ -118,6 +125,7 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
                           _buildSuggestion(
                             '📌 You have 3 overdue tasks. Break them down?',
                             () {
+                              ref.read(tobiServiceProvider).think();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Breaking down tasks with AI...'),
@@ -129,6 +137,7 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
                           _buildSuggestion(
                             '⏱️ Start a focus session on your top priority',
                             () {
+                              ref.read(tobiServiceProvider).wave();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Opening Focus tab...'),
@@ -140,6 +149,7 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
                           _buildSuggestion(
                             '🎯 Review your goals progress today',
                             () {
+                              ref.read(tobiServiceProvider).think();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Loading goal analysis...'),
@@ -152,6 +162,7 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
+                                ref.read(tobiServiceProvider).dance();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Opening Tobi AI Dashboard...'),
@@ -173,21 +184,27 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
               ),
             ),
 
-          // Main FAB
-          FloatingActionButton(
-            onPressed: _toggleAssistant,
-            backgroundColor: AppColors.primary,
-            child: AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _animationController.value * 0.5,
-                  child: const Text(
-                    '🤖',
-                    style: TextStyle(fontSize: 28),
+          // Main FAB replaced with Tobi icon that animates via provider
+          GestureDetector(
+            onTap: _toggleAssistant,
+            child: SizedBox(
+              height: 56,
+              width: 56,
+              child: ClipOval(
+                child: Container(
+                  color: AppColors.primary,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TobiWidget(
+                      animationName: ref.watch(tobiStateProvider).animationName,
+                      size: 40,
+                      frameCount: ref.watch(tobiStateProvider).frameCount,
+                      fps: ref.watch(tobiStateProvider).fps,
+                      loop: ref.watch(tobiStateProvider).loop,
+                    ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
         ],

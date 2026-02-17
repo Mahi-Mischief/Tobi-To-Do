@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
 import 'package:tobi_todo/providers/habit_provider.dart';
-import 'package:tobi_todo/providers/task_provider.dart';
+// removed unused import: task_provider
 import 'package:tobi_todo/providers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();

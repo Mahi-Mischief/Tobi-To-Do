@@ -11,6 +11,7 @@ import 'package:tobi_todo/features/growth/screens/growth_screen.dart';
 import 'package:tobi_todo/features/profile/screens/profile_screen.dart';
 import 'package:tobi_todo/features/shared/widgets/tobi_ai_assistant.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 import 'package:tobi_todo/services/firebase_options.dart' as fb_options;
 
 void main() async {
@@ -36,7 +37,7 @@ void main() async {
 }
 
 class MyApp extends ConsumerWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,7 +91,7 @@ class MyApp extends ConsumerWidget {
 }
 
 class MainNavigation extends ConsumerStatefulWidget {
-  const MainNavigation({Key? key}) : super(key: key);
+  const MainNavigation({super.key});
 
   @override
   ConsumerState<MainNavigation> createState() => _MainNavigationState();
@@ -113,7 +114,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
       body: Stack(
         children: [
           _screens[_selectedIndex],
-          const TobiAIAssistant(),
+          if (ref.read(tobiServiceProvider).shouldShowOnIndex(_selectedIndex)) const TobiAIAssistant(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

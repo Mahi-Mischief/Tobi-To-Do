@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tobi_todo/core/theme/app_colors.dart';
+// removed unused import: app_colors
 import 'package:tobi_todo/features/auth/screens/register_screen.dart';
 import 'package:tobi_todo/main.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();

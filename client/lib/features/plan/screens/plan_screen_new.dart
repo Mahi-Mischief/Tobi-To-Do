@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
-import 'package:tobi_todo/providers/task_provider.dart';
+// removed unused import: task_provider
 
 class PlanScreen extends ConsumerStatefulWidget {
-  const PlanScreen({Key? key}) : super(key: key);
+  const PlanScreen({super.key});
 
   @override
   ConsumerState<PlanScreen> createState() => _PlanScreenState();
@@ -57,7 +57,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _selectedPriority,
+                initialValue: _selectedPriority,
                 decoration: const InputDecoration(
                   labelText: 'Priority',
                   border: OutlineInputBorder(),

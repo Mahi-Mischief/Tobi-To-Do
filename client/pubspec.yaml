@@ -56,6 +56,9 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/lottie/
+    # Tobi animations (place the `tobi-animations` folder here as
+    # `client/assets/tobi_animations` so Flutter can bundle them)
+    - assets/tobi_animations/
 
   # Custom fonts will be added when available
   # fonts:
