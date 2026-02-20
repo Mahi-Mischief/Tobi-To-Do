@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
@@ -10,11 +10,14 @@ class FocusScreen extends ConsumerStatefulWidget {
   ConsumerState<FocusScreen> createState() => _FocusScreenState();
 }
 
-class _FocusScreenState extends ConsumerState<FocusScreen> {
+class _FocusScreenState extends ConsumerState<FocusScreen> with SingleTickerProviderStateMixin {
   Timer? _timer;
   int _secondsRemaining = 25 * 60; // 25 minute pomodoro
   bool _isRunning = false;
   bool _isBreak = false;
+  bool _distractionMode = false;
+
+  int get _sessionTotal => _isBreak ? 5 * 60 : 25 * 60;
 
   @override
   void dispose() {
@@ -28,6 +31,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     });
 
     if (_isRunning) {
+      // gentle Tobi acknowledgement when focus starts
+      try {
+        TobiService.instance.think();
+      } catch (_) {}
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           if (_secondsRemaining > 0) {
@@ -35,6 +42,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           } else {
             _timer?.cancel();
             _isRunning = false;
+            // celebrate end of session
+            try {
+              TobiService.instance.celebrate();
+            } catch (_) {}
             _switchMode();
           }
         });
@@ -68,103 +79,129 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgIdle = const Color(0xFFDEE6F8);
+    final bgRunning = const Color(0xFFCDD8F6);
+
+    final progressRatio = _secondsRemaining / _sessionTotal;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Focus'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha((0.3 * 255).round()),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _formatTime(_secondsRemaining),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isBreak ? 'Break Time' : 'Focus Time',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-            Text(
-              _isBreak ? 'Take a Break' : 'Deep Work Session',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _toggleTimer,
-                  icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
-                  label: Text(_isRunning ? 'Pause' : 'Start'),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: _resetTimer,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reset'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.transparent,
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 600),
+        color: _isRunning ? bgRunning : bgIdle,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Pomodoro Timer',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  // Custom header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Column(
+                      children: [
+                        const Text('Focus', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF2E3A59))),
+                        const SizedBox(height: 4),
+                        Text(_isBreak ? 'Break — breathe.' : 'Deep work builds your future.', style: const TextStyle(fontSize: 14, color: Color(0xFF6B7A99))),
+                      ],
+                    ),
                   ),
+
                   const SizedBox(height: 12),
-                  const Text(
-                    '25 minutes focus • 5 minutes break',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+
+                  // Animated progress ring (begin 1.0 -> end progressRatio)
+                  SizedBox(
+                    width: 260,
+                    height: 260,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 1.0, end: progressRatio),
+                      duration: const Duration(milliseconds: 500),
+                      builder: (context, value, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 12,
+                              backgroundColor: Colors.white.withAlpha(40),
+                              valueColor: const AlwaysStoppedAnimation(Color(0xFF9B8CFF)),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(_formatTime(_secondsRemaining), style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)),
+                                const SizedBox(height: 8),
+                                Text(_isBreak ? 'Break Time' : 'Pomodoro Session', style: const TextStyle(fontSize: 14, color: Colors.white70)),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Tip: Keep phone away and eliminate distractions for better focus.',
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+
+                  const SizedBox(height: 24),
+
+                  // Animated pill button
+                  GestureDetector(
+                    onTap: _toggleTimer,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 48),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8C82FF),
+                        borderRadius: BorderRadius.circular(40),
+                        boxShadow: [BoxShadow(color: const Color(0xFF8C82FF).withAlpha(102), blurRadius: 20, spreadRadius: 2)],
+                      ),
+                      child: Text(_isRunning ? 'Pause Focus' : 'Start Focus', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Session context + distraction mode row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(20)),
+                          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                            const Text('What are you working on?', style: TextStyle(color: Colors.white)),
+                            Icon(Icons.keyboard_arrow_down, color: Colors.white.withAlpha(153)),
+                          ]),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Distraction-free switch
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          const Text('Distraction-Free', style: TextStyle(color: Colors.white70)),
+                          const SizedBox(width: 8),
+                          Switch(value: _distractionMode, onChanged: (v) => setState(() => _distractionMode = v), activeThumbColor: Colors.white),
+                        ]),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              // Tobi small avatar bottom-left
+              Positioned(
+                left: 12,
+                bottom: 18,
+                child: Opacity(
+                  opacity: 0.88,
+                  child: GestureDetector(
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tobi here — ready to help'))),
+                    child: Image.asset('assets/Tobi.png', width: 64, height: 64, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

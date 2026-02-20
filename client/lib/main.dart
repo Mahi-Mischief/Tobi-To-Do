@@ -17,20 +17,16 @@ import 'package:tobi_todo/services/firebase_options.dart' as fb_options;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Only initialize Firebase on native platforms (not web)
-  if (!kIsWeb) {
-    try {
-      if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp(
-          options: fb_options.DefaultFirebaseOptions.currentPlatform,
-        );
-        debugPrint('✅ Firebase initialized (native platform)');
-      }
-    } catch (e) {
-      debugPrint('⚠️ Firebase init error (will use API auth): $e');
+  // Initialize Firebase for all platforms (web + native).
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: fb_options.DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint('✅ Firebase initialized');
     }
-  } else {
-    debugPrint('✅ Web platform - using API authentication');
+  } catch (e, st) {
+    debugPrint('⚠️ Firebase init error (falling back to API auth): $e');
   }
   
   runApp(const ProviderScope(child: MyApp()));

@@ -66,6 +66,7 @@ flutter:
     - assets/tobi_animations/sad/
     - assets/tobi_animations/think/
     - assets/tobi_animations/wave/
+    - assets/tobi_animations/app_logo.png
 
   # Custom fonts will be added when available
   # fonts:

@@ -6,7 +6,7 @@ import 'package:tobi_todo/models/user_model.dart';
 import 'package:tobi_todo/services/secure_storage_service.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://localhost:5000/api';
+  static const String baseUrl = 'http://127.0.0.1:5000/api';
   late Dio _dio;
   final SecureStorageService _secureStorage = SecureStorageService();
 
