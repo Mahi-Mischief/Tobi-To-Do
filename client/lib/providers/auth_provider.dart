@@ -28,7 +28,40 @@ class AuthNotifier extends AsyncNotifier<app_user.User?> {
     }
 
     // Check if user is already logged in from storage
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final storedUserId = await secureStorage.getUserId();
+      final storedEmail = await secureStorage.getEmail();
+      final hasToken = await secureStorage.hasToken();
+
+      if (storedUserId != null && storedUserId.isNotEmpty) {
+        // Try to restore a native Firebase user if possible
+        if (!kIsWeb) {
+          final current = firebaseAuthService.firebaseAuth.currentUser;
+          if (current != null) {
+            final restored = app_user.User(
+              id: current.uid,
+              email: current.email ?? storedEmail ?? '',
+              fullName: current.displayName ?? '',
+              createdAt: DateTime.now(),
+            );
+            return restored;
+          }
+        }
+
+        // Fallback: return a minimal user from stored data (useful for web/API flows)
+        if (storedEmail != null && hasToken) {
+          return app_user.User(
+            id: storedUserId,
+            email: storedEmail,
+            fullName: '',
+            createdAt: DateTime.now(),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AUTH] Failed to restore user from storage: $e');
+    }
+
     return null; // Start with no user
   }
 
