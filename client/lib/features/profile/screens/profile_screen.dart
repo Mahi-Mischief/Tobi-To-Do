@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -153,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildXPDetails(BuildContext context, dynamic stats) {
     return Card(
       elevation: 2,
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withAlpha((0.1 * 255).round()),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -251,14 +252,14 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _buildIntegrationCard('Google Calendar', 'Sync your schedule', '✓ Connected', true),
-        _buildIntegrationCard('Slack', 'Daily notifications', '⚠ Not connected', false),
-        _buildIntegrationCard('GitHub', 'Track coding contributions', 'Not set up', false),
+        _buildIntegrationCard(context, 'Google Calendar', 'Sync your schedule', '✓ Connected', true),
+        _buildIntegrationCard(context, 'Slack', 'Daily notifications', '⚠ Not connected', false),
+        _buildIntegrationCard(context, 'GitHub', 'Track coding contributions', 'Not set up', false),
       ],
     );
   }
 
-  Widget _buildIntegrationCard(String name, String description, String status, bool connected) {
+  Widget _buildIntegrationCard(BuildContext context, String name, String description, String status, bool connected) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -276,7 +277,15 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(name),
         subtitle: Text(description, style: const TextStyle(fontSize: 12)),
         trailing: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            if (connected) {
+              TobiService.instance.wave();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Manage integration — not implemented')));
+            } else {
+              TobiService.instance.wave();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Connecting... (mock)')));
+            }
+          },
           child: Text(connected ? 'Manage' : 'Connect'),
         ),
       ),
@@ -318,8 +327,9 @@ class ProfileScreen extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               await ref.read(authProvider.notifier).logout();
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 const SnackBar(content: Text('Logged out successfully')),
               );
             },

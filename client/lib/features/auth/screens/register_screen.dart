@@ -75,7 +75,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       // Celebrate with Tobi briefly
       try {
-        ref.read(tobiServiceProvider).celebrate();
+        TobiService.instance.celebrate();
       } catch (_) {}
 
       if (mounted) {
@@ -87,7 +87,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       setState(() => _errorMessage = 'Registration failed: $e');
       try {
-        ref.read(tobiServiceProvider).sad();
+        TobiService.instance.sad();
       } catch (_) {}
       debugPrint('❌ Registration error: $e');
     } finally {
@@ -247,7 +247,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             onPressed: () {
                             setState(() => _obscurePassword = !_obscurePassword);
                             try {
-                              ref.read(tobiServiceProvider).think();
+                              TobiService.instance.think();
                             } catch (_) {}
                           },
                           icon: Icon(
@@ -300,9 +300,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           colors: [Color(0xFF6B5FFF), Color(0xFF5B4FEF)],
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
+                          boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF6B5FFF).withOpacity(0.4),
+                            color: Color.fromRGBO(107, 95, 255, 0.4),
                             blurRadius: 16,
                             offset: Offset(0, 8),
                           ),
@@ -369,7 +369,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               child: InkWell(
                                 onTap: () {
                                   try {
-                                    ref.read(tobiServiceProvider).wave();
+                                    TobiService.instance.wave();
                                   } catch (_) {}
                                 },
                                 borderRadius: BorderRadius.circular(12),
@@ -397,7 +397,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               child: InkWell(
                                 onTap: () {
                                   try {
-                                    ref.read(tobiServiceProvider).think();
+                                    TobiService.instance.think();
                                   } catch (_) {}
                                 },
                                 borderRadius: BorderRadius.circular(12),
@@ -428,7 +428,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           GestureDetector(
                           onTap: () {
                             try {
-                              ref.read(tobiServiceProvider).wave();
+                              TobiService.instance.wave();
                             } catch (_) {}
                             Navigator.of(context).pop();
                           },

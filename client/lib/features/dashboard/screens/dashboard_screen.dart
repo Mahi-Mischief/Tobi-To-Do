@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
-import 'package:tobi_todo/providers/habit_provider.dart';
+import 'package:tobi_todo/features/shared/screens/tobi_dashboard_screen.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
+// removed unused import
 // removed unused import: task_provider
 import 'package:tobi_todo/providers/auth_provider.dart';
 
@@ -18,7 +20,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final gamificationStats = ref.watch(gamificationStatsProvider);
-    final habits = ref.watch(habitsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -76,7 +77,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '🤖 Ready to dominate today?',
+          '',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
@@ -102,16 +103,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildDailyBriefingButton(BuildContext context) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Daily Briefing - Loading your AI insights...')),
-        );
+        // Open Tobi Dashboard for daily briefing
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TobiDashboardScreen()));
+        TobiService.instance.think();
       },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+          decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+            colors: [AppColors.primary, AppColors.primary.withAlpha((0.7 * 255).round())],
           ),
           borderRadius: BorderRadius.circular(12),
         ),

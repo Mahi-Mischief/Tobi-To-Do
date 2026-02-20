@@ -12,6 +12,17 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.lightBackground,
+      colorScheme: ColorScheme.light(
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        surface: AppColors.lightSurface,
+        onSurface: AppColors.lightText,
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: AppColors.lightText),
+        bodyMedium: TextStyle(color: AppColors.lightText),
+        bodySmall: TextStyle(color: AppColors.lightText),
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.lightBackground,
         elevation: 0,
@@ -32,6 +43,16 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 4,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

@@ -7,10 +7,10 @@ class AIInsightsWidget extends StatelessWidget {
   final Map<String, dynamic>? dreamMetrics;
 
   const AIInsightsWidget({
-    Key? key,
+    super.key,
     this.currentMetrics,
     this.dreamMetrics,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class AIInsightsWidget extends StatelessWidget {
   Widget _buildMotivationalCard(BuildContext context) {
     return Card(
       elevation: 2,
-      color: AppColors.primary.withValues(alpha: 0.1),
+      color: AppColors.primary.withAlpha((0.1 * 255).round()),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -101,11 +101,17 @@ class AIInsightsWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '🤖 AI Features',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Image.asset('assets/tobi_animations/Tobi.png', height: 18),
+            const SizedBox(width: 8),
+            Text(
+              'AI Features',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         GridView.count(

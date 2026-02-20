@@ -46,8 +46,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  riverpod_generator: ^4.0.3
-  build_runner: ^2.4.0
+
 
 flutter:
   uses-material-design: true
@@ -59,6 +58,14 @@ flutter:
     # Tobi animations (place the `tobi-animations` folder here as
     # `client/assets/tobi_animations` so Flutter can bundle them)
     - assets/tobi_animations/
+    # Explicit animation folders to ensure nested frames are bundled for web
+    - assets/tobi_animations/idle/
+    - assets/tobi_animations/dance/
+    - assets/tobi_animations/jump_celebrate/
+    - assets/tobi_animations/punch_celebrate/
+    - assets/tobi_animations/sad/
+    - assets/tobi_animations/think/
+    - assets/tobi_animations/wave/
 
   # Custom fonts will be added when available
   # fonts:

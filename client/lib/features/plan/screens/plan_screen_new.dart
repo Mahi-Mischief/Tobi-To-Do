@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 // removed unused import: task_provider
 
 class PlanScreen extends ConsumerStatefulWidget {
@@ -188,11 +189,17 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                         children: [
                           IconButton(
                             icon: const Icon(Icons.chevron_left),
-                            onPressed: () {},
+                            onPressed: () {
+                              TobiService.instance.wave();
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Previous month')));
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.chevron_right),
-                            onPressed: () {},
+                            onPressed: () {
+                              TobiService.instance.wave();
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Next month')));
+                            },
                           ),
                         ],
                       ),
@@ -288,7 +295,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                     ButtonSegment(label: Text('Eisenhower'), value: 'matrix'),
                   ],
                   selected: {'list'},
-                  onSelectionChanged: (value) {},
+                  onSelectionChanged: (value) {
+                    TobiService.instance.think();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('View changed')));
+                  },
                 ),
               ),
             ],
@@ -299,20 +309,29 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
           Wrap(
             spacing: 8,
             children: [
-              FilterChip(
+                FilterChip(
                 label: const Text('All'),
                 selected: true,
-                onSelected: (value) {},
+                onSelected: (value) {
+                  TobiService.instance.think();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: All')));
+                },
               ),
               FilterChip(
                 label: const Text('High Priority'),
                 selected: false,
-                onSelected: (value) {},
+                onSelected: (value) {
+                  TobiService.instance.think();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: High Priority')));
+                },
               ),
               FilterChip(
                 label: const Text('Due Today'),
                 selected: false,
-                onSelected: (value) {},
+                onSelected: (value) {
+                  TobiService.instance.think();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: Due Today')));
+                },
               ),
             ],
           ),
@@ -353,7 +372,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: priorityColor.withOpacity(0.2),
+            color: priorityColor.withAlpha((0.2 * 255).round()),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -431,7 +450,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                           width: 260,
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.3),
+                              color: color.withAlpha((0.3 * 255).round()),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text('Task'),

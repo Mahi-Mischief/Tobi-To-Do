@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
 
 class GrowthScreen extends ConsumerWidget {
-  const GrowthScreen({Key? key}) : super(key: key);
+  const GrowthScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -120,7 +121,10 @@ class GrowthScreen extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    TobiService.instance.think();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('See all goals — not implemented yet')));
+                  },
                   child: const Text('See All'),
                 ),
               ],
@@ -166,7 +170,7 @@ class GrowthScreen extends ConsumerWidget {
   Widget _buildDreamMeSection(BuildContext context) {
     return Card(
       elevation: 2,
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withAlpha((0.1 * 255).round()),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -177,7 +181,10 @@ class GrowthScreen extends ConsumerWidget {
                 const Text('✨ Dream Me', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    TobiService.instance.think();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Dream Me — not implemented yet')));
+                  },
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Edit'),
                   style: ElevatedButton.styleFrom(
@@ -301,7 +308,7 @@ class GrowthScreen extends ConsumerWidget {
           children: items
               .map((item) => Chip(
                 label: Text(item),
-                backgroundColor: AppColors.primary.withOpacity(0.2),
+                backgroundColor: AppColors.primary.withAlpha((0.2 * 255).round()),
               ))
               .toList(),
         ),

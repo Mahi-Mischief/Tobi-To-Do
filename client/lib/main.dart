@@ -48,7 +48,7 @@ class MyApp extends ConsumerWidget {
       title: 'Tobi To-Do',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: authState.when(
         data: (user) {
           return user != null ? const MainNavigation() : const LoginScreen();
@@ -114,7 +114,7 @@ class _MainNavigationState extends ConsumerState<MainNavigation> {
       body: Stack(
         children: [
           _screens[_selectedIndex],
-          if (ref.read(tobiServiceProvider).shouldShowOnIndex(_selectedIndex)) const TobiAIAssistant(),
+          if (TobiService.instance.shouldShowOnIndex(_selectedIndex)) const TobiAIAssistant(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

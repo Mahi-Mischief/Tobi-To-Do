@@ -91,10 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Center(
-                        child: Text(
-                          '🤖',
-                          style: TextStyle(fontSize: 60),
-                        ),
+                        child: Image.asset('assets/tobi_animations/Tobi.png', height: 60, fit: BoxFit.contain),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -204,9 +201,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           colors: [Color(0xFF6B5FFF), Color(0xFF5B4FEF)],
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
+                          boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF6B5FFF).withOpacity(0.4),
+                            color: Color.fromRGBO(107, 95, 255, 0.4),
                             blurRadius: 16,
                             offset: Offset(0, 8),
                           ),

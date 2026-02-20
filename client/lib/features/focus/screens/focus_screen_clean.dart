@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
-  const FocusScreen({Key? key}) : super(key: key);
+  const FocusScreen({super.key});
 
   @override
   ConsumerState<FocusScreen> createState() => _FocusScreenState();
@@ -88,7 +88,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 border: Border.all(color: AppColors.primary, width: 4),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withAlpha((0.3 * 255).round()),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),

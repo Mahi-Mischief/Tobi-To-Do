@@ -1,5 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:flutter/foundation.dart';
 
 /// Firebase Service - Initialize and manage Firebase connection
 /// 
@@ -20,9 +20,9 @@ class FirebaseService {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-      print('✅ Firebase initialized successfully');
+      debugPrint('✅ Firebase initialized successfully');
     } catch (e) {
-      print('❌ Firebase initialization error: $e');
+      debugPrint('❌ Firebase initialization error: $e');
       rethrow;
     }
   }

@@ -14,15 +14,17 @@ class TobiWidget extends StatefulWidget {
   final int frameCount;
   final int fps;
   final bool loop;
+  final bool animate;
 
   const TobiWidget({
-    Key? key,
+    super.key,
     this.animationName = 'idle',
     this.size = 120,
     this.frameCount = 36,
     this.fps = 12,
     this.loop = true,
-  }) : super(key: key);
+    this.animate = true,
+  });
 
   @override
   State<TobiWidget> createState() => _TobiWidgetState();
@@ -36,7 +38,7 @@ class _TobiWidgetState extends State<TobiWidget> {
   void initState() {
     super.initState();
     _index = 0;
-    _start();
+    if (widget.animate) _start();
   }
 
   @override
@@ -67,7 +69,7 @@ class _TobiWidgetState extends State<TobiWidget> {
   void _restart() {
     _timer?.cancel();
     _index = 0;
-    _start();
+    if (widget.animate) _start();
   }
 
   @override
@@ -90,14 +92,14 @@ class _TobiWidgetState extends State<TobiWidget> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Image.asset(
-          path,
+          widget.animate ? path : 'assets/tobi_animations/${widget.animationName}/frame_000.png',
           fit: BoxFit.contain,
           errorBuilder: (c, e, s) {
-            // Fallback: show emoji if asset not found / not yet copied.
+            // Fallback: show Tobi image if asset not found / not yet copied.
             return Container(
               color: Colors.white,
               alignment: Alignment.center,
-              child: const Text('🤖', style: TextStyle(fontSize: 56)),
+              child: Image.asset('assets/tobi_animations/Tobi.png', height: 56, fit: BoxFit.contain),
             );
           },
         ),

@@ -1,29 +1,21 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tobi_todo/shared/models/tobi_state.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
-class TobiState {
-  final String animationName;
-  final int frameCount;
-  final int fps;
-  final bool loop;
-
-  const TobiState({
-    required this.animationName,
-    this.frameCount = 36,
-    this.fps = 12,
-    this.loop = true,
-  });
-}
-
-class TobiController {
-  final Ref ref;
+/// A Riverpod Notifier that mirrors the Tobi visual state. This lets other
+/// widgets subscribe via `ref.watch(tobiNotifierProvider)` while the
+/// `TobiService`/`TobiController` singletons can still be used directly.
+class TobiNotifier extends Notifier<TobiState> {
   Timer? _revertTimer;
 
-  TobiController(this.ref);
+  @override
+  TobiState build() {
+    return const TobiState(animationName: 'idle');
+  }
 
   void _setState(TobiState s) {
-    ref.read(tobiStateProvider.notifier).state = s;
+    state = s;
   }
 
   void play(String animationName, {int frameCount = 36, int fps = 12, bool loop = false, int? durationMs}) {
@@ -48,13 +40,8 @@ class TobiController {
   }
 }
 
-// Reactive state provider for Tobi's visual state
-final tobiStateProvider = StateProvider<TobiState>((ref) {
-  return const TobiState(animationName: 'idle');
-});
+final tobiNotifierProvider = NotifierProvider<TobiNotifier, TobiState>(TobiNotifier.new);
 
-final tobiControllerProvider = Provider<TobiController>((ref) {
-  final controller = TobiController(ref);
-  ref.onDispose(() => controller.dispose());
-  return controller;
-});
+/// Provide access to the singleton `TobiService` for any remaining call-sites
+/// that use a provider instead of the direct singleton API.
+final tobiServiceProvider = Provider<TobiService>((ref) => TobiService.instance);

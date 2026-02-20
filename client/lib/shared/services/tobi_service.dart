@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tobi_todo/shared/providers/tobi_provider.dart';
+import 'package:tobi_todo/shared/services/tobi_controller.dart';
 
 class TobiService {
-  final Ref ref;
-  final Map<String, int> _frameCounts = {};
-
-  TobiService(this.ref) {
+  TobiService._internal() {
     _init();
   }
+
+  static final TobiService instance = TobiService._internal();
+
+  final Map<String, int> _frameCounts = {};
 
   Future<void> _init() async {
     try {
@@ -40,7 +40,7 @@ class TobiService {
   /// Play a raw animation by name.
   void play(String name, {int? fps, bool loop = false}) {
     final count = getFrameCount(name);
-    ref.read(tobiControllerProvider).play(name, frameCount: count, fps: fps ?? 12, loop: loop);
+    TobiController.instance.play(name, frameCount: count, fps: fps ?? 12, loop: loop);
   }
 
   // Convenience reactions
@@ -58,6 +58,3 @@ class TobiService {
   }
 }
 
-final tobiServiceProvider = Provider<TobiService>((ref) {
-  return TobiService(ref);
-});

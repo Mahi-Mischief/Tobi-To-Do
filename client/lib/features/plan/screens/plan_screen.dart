@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
-  const PlanScreen({Key? key}) : super(key: key);
+  const PlanScreen({super.key});
 
   @override
   ConsumerState<PlanScreen> createState() => _PlanScreenState();
@@ -90,7 +91,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   child: _FilterChip(
                     label: 'All',
                     selected: true,
-                    onTap: () {},
+                    onTap: () {
+                      TobiService.instance.think();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: All')));
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -98,7 +102,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   child: _FilterChip(
                     label: 'Active',
                     selected: false,
-                    onTap: () {},
+                    onTap: () {
+                      TobiService.instance.think();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: Active')));
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -106,7 +113,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   child: _FilterChip(
                     label: 'Completed',
                     selected: false,
-                    onTap: () {},
+                    onTap: () {
+                      TobiService.instance.think();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filter: Completed')));
+                    },
                   ),
                 ),
               ],
