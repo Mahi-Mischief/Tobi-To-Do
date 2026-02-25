@@ -98,10 +98,6 @@ class AuthNotifier extends AsyncNotifier<app_user.User?> {
       debugPrint('❌ [AUTH] Registration error: $e');
       state = AsyncValue.error(e, st);
     }
-    } catch (e, st) {
-      debugPrint('❌ [AUTH] Registration error: $e');
-      state = AsyncValue.error(e, st);
-    }
   }
 
   Future<void> login({

@@ -1,42 +1,41 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Colors
-  static const Color primary = Color(0xFF6BB9FF); // light blue
-  static const Color secondary = Color(0xFF00B894);
-  static const Color accent = Color(0xFFFF7675);
+  // Pastel core palette
+  static const Color primary = Color(0xFF7C83FD); // soft indigo
+  static const Color primaryLight = Color(0xFFEDE7F6); // pastel lavender
+  static const Color primarySofter = Color(0xFFD1C4E9); // muted purple
+  static const Color accentBlue = Color(0xFFD6E4FF); // soft blue wash
+  static const Color accentPink = Color(0xFFFFE0EC); // muted pink
+  static const Color accentPeach = Color(0xFFFFF2E5); // warm peach
+  static const Color accentMint = Color(0xFFDFF7F2); // mint wash
+  static const Color textPrimary = Color(0xFF2E2A4A); // deep slate
+  static const Color textSecondary = Color(0xFF6B7280); // muted gray
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceSoft = Color(0xFFF7F8FF);
+  static const Color background = Color(0xFFF6F7FB);
+  static const Color border = Color(0xFFE6E8F5);
 
-  // Light Theme
-  static const Color lightBackground = Colors.white;
-  static const Color lightSurface = Colors.white;
-  static const Color lightText = Color(0xFF2D3436);
-  static const Color lightGray = Color(0xFFDFE6E9);
-  static const Color lightBorder = Color(0xFFE0E0E0);
+  // Status
+  static const Color success = Color(0xFF7CD992);
+  static const Color warning = Color(0xFFFFCF6F);
+  static const Color error = Color(0xFFFF9AA2);
+  static const Color info = Color(0xFF7AB8FF);
 
-  // Dark Theme
-  static const Color darkBackground = Color(0xFF1A1A1A);
-  static const Color darkSurface = Color(0xFF2D2D2D);
-  static const Color darkText = Color(0xFFF5F5F5);
-  static const Color darkGray = Color(0xFF505050);
-  static const Color darkBorder = Color(0xFF404040);
+  // Pillar Colors (kept for compatibility with existing screens)
+  static const Color plan = primary;
+  static const Color execute = success;
+  static const Color improve = warning;
+  static const Color become = accentPink;
+  static const Color assist = info;
 
-  // Status Colors
-  static const Color success = Color(0xFF00B894);
-  static const Color warning = Color(0xFFFFBE76);
-  static const Color error = Color(0xFFFF7675);
-  static const Color info = Color(0xFF0984E3);
+  // Shadows
+  static const Color shadowSoft = Color(0x1A000000); // 10% black
 
-  // Gamification Colors
-  static const Color gold = Color(0xFFFFD93D);
-  static const Color silver = Color(0xFFC0C0C0);
-  static const Color bronze = Color(0xFFCD7F32);
-
-  // Pillar Colors
-  static const Color plan = Color(0xFF6C5CE7);
-  static const Color execute = Color(0xFF00B894);
-  static const Color improve = Color(0xFFFF7675);
-  static const Color become = Color(0xFFFFBE76);
-  static const Color assist = Color(0xFF0984E3);
+  // Gradient helpers
+  static const List<Color> cardGradient = [primaryLight, primarySofter];
+  static const List<Color> backgroundGradient = [primaryLight, accentBlue];
+  static const List<Color> highlightGradient = [Color(0xFF8E8BE6), Color(0xFF9AC6F3)];
 }
 
 class AppTypography {
@@ -124,10 +123,12 @@ class AppSpacing {
   static const double md = 16.0;
   static const double lg = 24.0;
   static const double xl = 32.0;
+  static const double xxl = 40.0;
 }
 
 class AppRadius {
   static const double small = 8.0;
-  static const double medium = 12.0;
-  static const double large = 16.0;
+  static const double medium = 16.0;
+  static const double large = 24.0;
+  static const double pill = 30.0;
 }

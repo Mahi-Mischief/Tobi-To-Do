@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import 'app_colors.dart';
 
 // Re-export common theme helpers so screens can import only `app_theme.dart`
@@ -7,92 +9,118 @@ export 'app_colors.dart';
 class AppTheme {
   // Light Theme
   static ThemeData get lightTheme {
+    final textTheme = GoogleFonts.poppinsTextTheme().apply(
+      bodyColor: AppColors.textPrimary,
+      displayColor: AppColors.textPrimary,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.lightBackground,
+      scaffoldBackgroundColor: AppColors.background,
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
-        onPrimary: Colors.white,
-        surface: AppColors.lightSurface,
-        onSurface: AppColors.lightText,
+        surface: AppColors.surface,
+        onSurface: AppColors.textPrimary,
       ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: AppColors.lightText),
-        bodyMedium: TextStyle(color: AppColors.lightText),
-        bodySmall: TextStyle(color: AppColors.lightText),
+      textTheme: textTheme.copyWith(
+        titleLarge: textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+        bodyLarge: textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+        bodyMedium: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.lightBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: AppColors.darkText,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w700,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.lightBackground,
+        backgroundColor: AppColors.surfaceSoft,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.lightGray,
+        unselectedItemColor: AppColors.textSecondary,
         elevation: 8,
+        type: BottomNavigationBarType.fixed,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          side: const BorderSide(color: AppColors.border),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+          elevation: 0,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.lightGray,
+        fillColor: AppColors.surfaceSoft,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
-        contentPadding: const EdgeInsets.all(16),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
+      dividerColor: AppColors.border,
     );
   }
 
   // Dark Theme
   static ThemeData get darkTheme {
+    // Basic dark theme fallback; primary experience is light/pastel.
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.darkBackground,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkBackground,
+      scaffoldBackgroundColor: Colors.black,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: AppColors.lightText,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: Colors.black,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.darkGray,
+        unselectedItemColor: Colors.white70,
         elevation: 8,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 8,
       ),
     );
   }

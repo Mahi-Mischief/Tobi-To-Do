@@ -21,10 +21,60 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || '*',
-  credentials: true
-}));
+// Configure CORS:
+// - If CORS_ORIGIN is set in .env it should be a comma-separated list of allowed origins.
+// - In development, when not set, reflect the request origin (allow any local frontend) while still
+//   enabling cookies/credentials support.
+const rawCors = process.env.CORS_ORIGIN;
+const allowedOrigins = rawCors ? rawCors.split(',').map(s => s.trim()).filter(Boolean) : null;
+
+if (allowedOrigins && allowedOrigins.length > 0) {
+  // Support exact matches, wildcard '*' and host-only matches (e.g. http://127.0.0.1)
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Non-browser requests (curl, server-to-server) may have no origin
+        if (!origin) return callback(null, true);
+
+        // Allow explicit wildcard
+        if (allowedOrigins.includes('*')) return callback(null, true);
+
+        // Exact origin match
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+
+        // Host-only match: allow entries like 'http://127.0.0.1' to match any port
+        try {
+          const reqHost = new URL(origin).hostname;
+          for (const ao of allowedOrigins) {
+            try {
+              const aoHost = new URL(ao).hostname;
+              if (aoHost && aoHost === reqHost) return callback(null, true);
+            } catch (e) {
+              // ignore malformed allowed origin entries
+            }
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+
+        return callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    }),
+  );
+} else {
+  // Allow reflected origin for development (supports credentials and common methods/headers)
+  app.use(
+    cors({
+      origin: (origin, callback) => callback(null, true),
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    }),
+  );
+}
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -60,10 +110,10 @@ async function startServer() {
     // Initialize Firebase (optional)
     initializeFirebase();
 
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`✓ Server running on http://localhost:${PORT}`);
-      console.log(`✓ API Health: http://localhost:${PORT}/api/health`);
+    // Start server binding to all interfaces so browsers/containers can reach it
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✓ Server running on http://0.0.0.0:${PORT}`);
+      console.log(`✓ API Health: http://0.0.0.0:${PORT}/api/health`);
     });
   } catch (error) {
     console.error('✗ Failed to start server:', error);

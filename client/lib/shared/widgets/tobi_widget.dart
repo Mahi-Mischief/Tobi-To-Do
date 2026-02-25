@@ -99,7 +99,7 @@ class _TobiWidgetState extends State<TobiWidget> {
             return Container(
               color: Colors.white,
               alignment: Alignment.center,
-              child: Image.asset('assets/tobi_animations/Tobi.png', height: 56, fit: BoxFit.contain),
+              child: Image.asset('assets/tobi_animations/app_logo.png', height: 56, fit: BoxFit.contain),
             );
           },
         ),

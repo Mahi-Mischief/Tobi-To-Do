@@ -103,7 +103,7 @@ class AIInsightsWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            Image.asset('assets/tobi_animations/Tobi.png', height: 18),
+            Image.asset('assets/tobi_animations/app_logo.png', height: 18),
             const SizedBox(width: 8),
             Text(
               'AI Features',

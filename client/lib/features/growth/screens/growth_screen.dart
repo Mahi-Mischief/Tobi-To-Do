@@ -1,14 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/providers/dream_me_provider.dart';
 import 'package:tobi_todo/shared/services/tobi_service.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
 
-class GrowthScreen extends ConsumerWidget {
+class GrowthScreen extends ConsumerStatefulWidget {
   const GrowthScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GrowthScreen> createState() => _GrowthScreenState();
+}
+
+class _GrowthScreenState extends ConsumerState<GrowthScreen> {
+  final _diaryController = TextEditingController();
+  final _notesController = TextEditingController();
+  final List<TextEditingController> _gratitudeControllers = List.generate(3, (_) => TextEditingController());
+  double _mood = 5;
+  DateTime _journalDate = DateTime.now();
+  final Map<String, _JournalEntry> _journalByDay = {};
+
+  @override
+  void dispose() {
+    _diaryController.dispose();
+    _notesController.dispose();
+    for (final c in _gratitudeControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final leaderboard = ref.watch(leaderboardProvider);
 
     return Scaffold(
@@ -38,12 +63,16 @@ class GrowthScreen extends ConsumerWidget {
               _buildKeyMetrics(context, leaderboard),
               const SizedBox(height: 24),
 
+              // Notes & Journaling
+              _buildJournalSection(context),
+              const SizedBox(height: 24),
+
               // Goals & Habits Section
               _buildGoalsSection(context),
               const SizedBox(height: 24),
 
               // Dream Me Section
-              _buildDreamMeSection(context),
+              _buildDreamMeSection(context, ref),
               const SizedBox(height: 24),
 
               // Analytics
@@ -74,6 +103,166 @@ class GrowthScreen extends ConsumerWidget {
           child: _buildMetricCard('Streak', '7 days', Colors.orange),
         ),
       ],
+    );
+  }
+
+  Widget _buildJournalSection(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '📝 Notes & Journaling',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Chip(label: Text('Mood ${_mood.toStringAsFixed(1)}/10')),
+                    Text(DateFormat('EEE, MMM d').format(_journalDate), style: const TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _journalDate,
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _journalDate = picked;
+                        _loadEntryForDay(picked);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_month),
+                  label: const Text('Pick a day'),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Previous day',
+                  onPressed: () {
+                    setState(() {
+                      _journalDate = _journalDate.subtract(const Duration(days: 1));
+                      _loadEntryForDay(_journalDate);
+                    });
+                  },
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                IconButton(
+                  tooltip: 'Next day',
+                  onPressed: () {
+                    setState(() {
+                      _journalDate = _journalDate.add(const Duration(days: 1));
+                      _loadEntryForDay(_journalDate);
+                    });
+                  },
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text('Diary for today', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _diaryController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'How did the day feel? What stood out?',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Mood', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Slider(
+              value: _mood,
+              min: 1,
+              max: 10,
+              divisions: 18,
+              label: _mood.toStringAsFixed(1),
+              onChanged: (value) => setState(() => _mood = value),
+            ),
+            const SizedBox(height: 12),
+            Text('Notes — don’t forget', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _notesController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'Capture ideas, work-in-progress thoughts, or reminders',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Gratitude (3+ items)', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            ..._gratitudeControllers
+                .asMap()
+                .entries
+                .map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: entry.value,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.favorite_border),
+                        labelText: 'Gratitude ${entry.key + 1}',
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _gratitudeControllers.add(TextEditingController())),
+                icon: const Icon(Icons.add),
+                label: const Text('Add another'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _saveEntry();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Journal saved for ${DateFormat('MMM d').format(_journalDate)}')),
+                    );
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Save entry'),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _clearInputs();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Cleared ${DateFormat('MMM d').format(_journalDate)} entry')),
+                    );
+                  },
+                  icon: const Icon(Icons.backspace),
+                  label: const Text('Clear'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -167,7 +356,10 @@ class GrowthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDreamMeSection(BuildContext context) {
+  Widget _buildDreamMeSection(BuildContext context, WidgetRef ref) {
+    final alignment = ref.watch(alignmentScoreProvider);
+    final profileCompletion = ref.watch(profileCompletionProvider);
+
     return Card(
       elevation: 2,
       color: AppColors.primary.withAlpha((0.1 * 255).round()),
@@ -182,8 +374,7 @@ class GrowthScreen extends ConsumerWidget {
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: () {
-                    TobiService.instance.think();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Dream Me — not implemented yet')));
+                    context.push('/dream-me');
                   },
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Edit'),
@@ -200,22 +391,42 @@ class GrowthScreen extends ConsumerWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'In 5 years, I want to be:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      const Text('Identity alignment', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      Chip(label: Text('$profileCompletion% ready')),
+                    ],
                   ),
-                  SizedBox(height: 8),
-                  Text('A senior mobile developer leading innovation in emerging tech'),
-                  SizedBox(height: 12),
-                  Text('Steps to get there:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Text('• Master advanced Flutter & Dart patterns'),
-                  Text('• Contribute to open-source projects'),
-                  Text('• Build 5+ production apps'),
-                  Text('• Mentor junior developers'),
+                  const SizedBox(height: 8),
+                  alignment.when(
+                    data: (data) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Alignment score: ${data.score}/100'),
+                        const SizedBox(height: 6),
+                        LinearProgressIndicator(
+                          value: data.score / 100,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Habits consistency: ${data.breakdown['habitConsistency']?.round() ?? 0}'),
+                        Text('Goal momentum: ${data.breakdown['goalCount']?.round() ?? 0}'),
+                      ],
+                    ),
+                    loading: () => const Text('Loading alignment...'),
+                    error: (e, _) => Text('Alignment unavailable: $e'),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Tap edit to refine your identity statements, mental contrasting, and monthly reflections.',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
                 ],
               ),
             ),
@@ -237,6 +448,20 @@ class GrowthScreen extends ConsumerWidget {
               '📊 Analytics & Reports',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push('/analytics'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Open Analytics & Reports'),
               ),
             ),
             const SizedBox(height: 16),
@@ -315,5 +540,64 @@ class GrowthScreen extends ConsumerWidget {
       ],
     );
   }
+
+  void _saveEntry() {
+    final key = _dayKey(_journalDate);
+    _journalByDay[key] = _JournalEntry(
+      diary: _diaryController.text.trim(),
+      notes: _notesController.text.trim(),
+      gratitude: _gratitudeControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).toList(),
+      mood: _mood,
+    );
+  }
+
+  void _loadEntryForDay(DateTime day) {
+    final entry = _journalByDay[_dayKey(day)];
+    if (entry == null) {
+      _clearInputs();
+      return;
+    }
+    _diaryController.text = entry.diary;
+    _notesController.text = entry.notes;
+    _mood = entry.mood;
+    // Rebuild gratitude controllers to fit stored list length (min 3).
+    final desired = entry.gratitude.isEmpty ? 3 : entry.gratitude.length;
+    if (_gratitudeControllers.length < desired) {
+      final addCount = desired - _gratitudeControllers.length;
+      for (int i = 0; i < addCount; i++) {
+        _gratitudeControllers.add(TextEditingController());
+      }
+    }
+    for (var i = 0; i < _gratitudeControllers.length; i++) {
+      _gratitudeControllers[i].text = i < entry.gratitude.length ? entry.gratitude[i] : '';
+    }
+    setState(() {});
+  }
+
+  void _clearInputs() {
+    _diaryController.clear();
+    _notesController.clear();
+    _mood = 5;
+    for (final c in _gratitudeControllers) {
+      c.clear();
+    }
+    setState(() {});
+  }
+
+  String _dayKey(DateTime day) => '${day.year}-${day.month}-${day.day}';
+}
+
+class _JournalEntry {
+  final String diary;
+  final String notes;
+  final List<String> gratitude;
+  final double mood;
+
+  _JournalEntry({
+    required this.diary,
+    required this.notes,
+    required this.gratitude,
+    required this.mood,
+  });
 }
 

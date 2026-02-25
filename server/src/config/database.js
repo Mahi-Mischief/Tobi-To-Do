@@ -1,29 +1,49 @@
-import pkg from 'pg';
-const { Pool } = pkg;
+import fs from 'fs';
+import pg from 'pg';
+const { Pool } = pg;
 
-// PostgreSQL connection pool (Supabase compatible)
+// Configure SSL for Postgres (Supabase requires SSL). Support three modes:
+// 1) If PROD_CA_PATH env var points to a cert file, use it and enforce rejectUnauthorized:true
+// 2) If the cert file isn't available but DB_SSL_FALLBACK_ALLOW_INSECURE is true, set rejectUnauthorized:false
+// 3) Otherwise try to use SSL with rejectUnauthorized:true and log guidance on failure
+const sslOptions = {};
+const certPath = process.env.PROD_CA_PATH || 'server/prod-ca-2021.crt';
+try {
+  if (fs.existsSync(certPath)) {
+    sslOptions.ca = fs.readFileSync(certPath).toString();
+    sslOptions.rejectUnauthorized = true;
+    console.log(`Using DB SSL cert from ${certPath}`);
+  } else if (process.env.DB_SSL_FALLBACK_ALLOW_INSECURE === 'true') {
+    sslOptions.rejectUnauthorized = false; // development fallback
+    console.warn('DB SSL cert not found — falling back to rejectUnauthorized=false (development only)');
+  } else {
+    // default attempt: require SSL but no CA provided
+    sslOptions.rejectUnauthorized = true;
+    console.warn('No DB SSL cert found. If connection fails, set PROD_CA_PATH or DB_SSL_FALLBACK_ALLOW_INSECURE=true for development.');
+  }
+} catch (err) {
+  console.error('Error configuring DB SSL options:', err);
+  sslOptions.rejectUnauthorized = false;
+}
+
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'postgres',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  // SSL required for Supabase
-  ssl: process.env.DB_SSL === 'true' || process.env.DB_HOST?.includes('supabase') ? {
-    rejectUnauthorized: false
-  } : false,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  ssl: sslOptions,
 });
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
 });
 
-// Initialize database tables if they don't exist
 export async function initializeDatabase() {
   try {
     const client = await pool.connect();
-    
-    // Create users table
+
+    // ------------------ Users Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,7 +63,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create tasks table
+    // ------------------ Tasks Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,7 +83,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create goals table
+    // ------------------ Goals Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS goals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,7 +99,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create habits table
+    // ------------------ Habits Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS habits (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,7 +116,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create habit_goal_links table (junction table)
+    // ------------------ Habit-Goal Links Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS habit_goal_links (
         habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
@@ -106,7 +126,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create focus_sessions table
+    // ------------------ Focus Sessions Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS focus_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -119,7 +139,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create achievements table
+    // ------------------ Achievements Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS achievements (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -131,7 +151,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create dream_profiles table
+    // ------------------ Dream Profiles Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS dream_profiles (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -145,7 +165,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create reflections table
+    // ------------------ Reflections Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS reflections (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -157,7 +177,7 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Create indexes for better performance
+    // ------------------ Indexes ------------------
     await client.query('CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id);');
@@ -172,6 +192,7 @@ export async function initializeDatabase() {
   }
 }
 
+// ------------------ Helpers ------------------
 export function getPool() {
   return pool;
 }

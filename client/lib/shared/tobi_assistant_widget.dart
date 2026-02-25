@@ -4,10 +4,7 @@ import 'package:tobi_todo/core/constants/app_colors.dart';
 class TobiAssistant extends StatefulWidget {
   final VoidCallback? onTap;
 
-  const TobiAssistant({
-    Key? key,
-    this.onTap,
-  }) : super(key: key);
+  const TobiAssistant({super.key, this.onTap});
 
   @override
   State<TobiAssistant> createState() => _TobiAssistantState();

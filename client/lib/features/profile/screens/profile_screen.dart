@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
+import 'package:tobi_todo/providers/avatar_provider.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
 import 'package:tobi_todo/shared/services/tobi_service.dart';
+import 'package:tobi_todo/shared/widgets/avatar_widget.dart';
+import 'package:tobi_todo/features/profile/screens/avatar_selector_page.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -12,6 +15,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final gamificationStats = ref.watch(gamificationStatsProvider);
+    final avatarConfig = ref.watch(avatarProvider);
 
     return Scaffold(
       body: authState.when(
@@ -44,6 +48,11 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Load avatar config from Supabase once per user
+                  FutureBuilder(
+                    future: ref.read(avatarProvider.notifier).ensureLoaded(user.id),
+                    builder: (_, __) => const SizedBox.shrink(),
+                  ),
                   // Header
                   Text(
                     '👤 Profile',
@@ -54,7 +63,7 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Profile Card
-                  _buildProfileCard(context, user),
+                  _buildProfileCard(context, user, avatarConfig, ref),
                   const SizedBox(height: 24),
 
                   // XP & Level Details
@@ -86,14 +95,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, dynamic user) {
-    String initials = (user?.fullName ?? 'U')
-        .split(' ')
-        .map((word) => word.isNotEmpty ? word[0] : '')
-        .join()
-        .toUpperCase()
-        .substring(0, 1);
-
+  Widget _buildProfileCard(BuildContext context, dynamic user, dynamic avatarConfig, WidgetRef ref) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -101,17 +103,16 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: AppColors.primary,
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+            AvatarWidget(config: avatarConfig, size: 140, background: AppColors.surfaceSoft),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.brush_rounded),
+              label: const Text('Edit avatar'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AvatarSelectorPage()),
+                );
+              },
             ),
             const SizedBox(height: 16),
             Text(

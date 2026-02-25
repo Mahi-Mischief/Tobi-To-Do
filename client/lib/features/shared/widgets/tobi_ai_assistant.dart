@@ -93,7 +93,7 @@ class _TobiAIAssistantState extends ConsumerState<TobiAIAssistant>
                         children: [
                           Row(
                             children: [
-                              Image.asset('assets/tobi_animations/Tobi.png', height: 18),
+                              Image.asset('assets/tobi_animations/app_logo.png', height: 18),
                               const SizedBox(width: 8),
                               const Text(
                                 'Tobi AI',

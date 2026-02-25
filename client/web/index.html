@@ -2,6 +2,15 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
+  <script>
+    // If Flutter hasn't replaced the placeholder (e.g., serving raw web/), default to root so assets resolve
+    (function () {
+      const base = document.querySelector('base');
+      if (base && base.getAttribute('href') === '$FLUTTER_BASE_HREF') {
+        base.setAttribute('href', '/');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Tobi - AI Life Operating System">
@@ -13,10 +22,14 @@
   <title>Tobi To-Do</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Firebase JS SDKs - required by firebase_core on web. Do NOT initialize here; Dart will initialize. -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js"></script>
+  <script>
+    // Hard-unregister any old service workers so fresh assets load (avoids cached 404s like assets/assets/...)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
+  </script>
+
+  <!-- Firebase scripts are initialized from Dart; removing direct includes to avoid module import errors on web. -->
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

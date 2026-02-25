@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_client.dart';
 
@@ -23,6 +24,24 @@ class DreamProfile {
     required this.updatedAt,
   });
 
+  DreamProfile copyWith({
+    String? visionStatement,
+    String? coreValues,
+    String? threeYearGoal,
+    List<String>? identityStatements,
+  }) {
+    return DreamProfile(
+      id: id,
+      userId: userId,
+      visionStatement: visionStatement ?? this.visionStatement,
+      coreValues: coreValues ?? this.coreValues,
+      threeYearGoal: threeYearGoal ?? this.threeYearGoal,
+      identityStatements: identityStatements ?? this.identityStatements,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+
   factory DreamProfile.fromJson(Map<String, dynamic> json) {
     return DreamProfile(
       id: json['id'],
@@ -30,10 +49,21 @@ class DreamProfile {
       visionStatement: json['vision_statement'],
       coreValues: json['core_values'],
       threeYearGoal: json['three_year_goal'],
-      identityStatements: List<String>.from(json['identityStatements'] ?? []),
+      identityStatements: List<String>.from(
+        json['identityStatements'] ?? json['identity_statements'] ?? [],
+      ),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
+  }
+
+  Map<String, dynamic> toPayload() {
+    return {
+      'visionStatement': visionStatement,
+      'coreValues': coreValues,
+      'threeYearGoal': threeYearGoal,
+      'identityStatements': identityStatements,
+    };
   }
 }
 
@@ -100,11 +130,78 @@ class Reflection {
   }
 }
 
-// Lightweight provider shim for dream profile to satisfy analyzer.
-// Replace with a full implementation later if needed.
-final dreamMeProvider = Provider<DreamProfile?>((ref) {
-  return null;
+// Dream profile loader
+final dreamProfileProvider = FutureProvider<DreamProfile?>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  try {
+    final response = await api.get('/dream-me/profile');
+    return DreamProfile.fromJson(response);
+  } on DioException catch (e) {
+    // If profile doesn't exist yet, surface null instead of throwing
+    if (e.response?.statusCode == 404) {
+      return null;
+    }
+    rethrow;
+  }
 });
+
+// Actions for creating/updating profile and reflections
+class DreamMeController {
+  DreamMeController(this.ref);
+
+  final Ref ref;
+
+  Future<DreamProfile> saveProfile({
+    required String visionStatement,
+    required String coreValues,
+    required String threeYearGoal,
+    required List<String> identityStatements,
+  }) async {
+    final api = ref.read(apiClientProvider);
+    final payload = {
+      'visionStatement': visionStatement,
+      'coreValues': coreValues,
+      'threeYearGoal': threeYearGoal,
+      'identityStatements': identityStatements,
+    };
+
+    final response = await api.post('/dream-me/profile', payload);
+    final profile = DreamProfile.fromJson(response);
+
+    // Refresh dependent views
+    ref.invalidate(dreamProfileProvider);
+    ref.invalidate(alignmentScoreProvider);
+    ref.invalidate(gapAnalysisProvider);
+    ref.invalidate(dreamMeInsightsProvider);
+    ref.invalidate(milestoneProgressProvider);
+
+    return profile;
+  }
+
+  Future<Reflection> addReflection({
+    required String content,
+    String? mood,
+    String? insights,
+  }) async {
+    final api = ref.read(apiClientProvider);
+    final payload = {
+      'content': content,
+      if (mood != null && mood.isNotEmpty) 'mood': mood,
+      if (insights != null && insights.isNotEmpty) 'insights': insights,
+    };
+
+    final response = await api.post('/dream-me/reflections', payload);
+    final reflection = Reflection.fromJson(response);
+
+    // Refresh lists and insights
+    ref.invalidate(reflectionsProvider);
+    ref.invalidate(dreamMeInsightsProvider);
+
+    return reflection;
+  }
+}
+
+final dreamMeControllerProvider = Provider((ref) => DreamMeController(ref));
 
 // Provider for alignment score
 final alignmentScoreProvider = FutureProvider<AlignmentScore>((ref) async {
@@ -141,15 +238,19 @@ final milestoneProgressProvider = FutureProvider<Map<String, dynamic>?>((ref) as
 
 // Derived provider for profile completion percentage
 final profileCompletionProvider = Provider<int>((ref) {
-  final profile = ref.watch(dreamMeProvider);
+  final profile = ref.watch(dreamProfileProvider).maybeWhen(
+        data: (data) => data,
+        orElse: () => null,
+  );
+
   if (profile == null) return 0;
 
   int completed = 0;
-  int total = 4;
+  const total = 4;
 
-  if (profile.visionStatement != null) completed++;
-  if (profile.coreValues != null) completed++;
-  if (profile.threeYearGoal != null) completed++;
+  if (profile.visionStatement != null && profile.visionStatement!.isNotEmpty) completed++;
+  if (profile.coreValues != null && profile.coreValues!.isNotEmpty) completed++;
+  if (profile.threeYearGoal != null && profile.threeYearGoal!.isNotEmpty) completed++;
   if (profile.identityStatements.isNotEmpty) completed++;
 
   return (completed / total * 100).round();

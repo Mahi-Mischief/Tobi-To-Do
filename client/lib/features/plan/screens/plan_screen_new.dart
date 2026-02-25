@@ -16,6 +16,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   String _selectedPriority = 'medium';
+  DateTime _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -163,12 +165,22 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
   }
 
   Widget _buildCalendarView(BuildContext context) {
+    final now = DateTime.now();
+    final minMonth = DateTime(now.year, now.month);
+    final maxMonth = DateTime(now.year + 10, 12); // end of 10th year
+
+    bool canGoPrev = _focusedMonth.isAfter(minMonth);
+    bool canGoNext = _focusedMonth.isBefore(maxMonth);
+
+    final days = _buildMonthDays(_focusedMonth);
+    final monthLabel = '${_monthName(_focusedMonth.month)} ${_focusedMonth.year}';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Month Calendar Header
+          // Month Calendar Header + Grid
           Card(
             elevation: 2,
             child: Padding(
@@ -180,7 +192,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'December 2024',
+                        monthLabel,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -189,56 +201,96 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                         children: [
                           IconButton(
                             icon: const Icon(Icons.chevron_left),
-                            onPressed: () {
-                              TobiService.instance.wave();
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Previous month')));
-                            },
+                            onPressed: canGoPrev
+                                ? () => setState(() {
+                                      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+                                    })
+                                : null,
                           ),
                           IconButton(
                             icon: const Icon(Icons.chevron_right),
-                            onPressed: () {
-                              TobiService.instance.wave();
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Next month')));
-                            },
+                            onPressed: canGoNext
+                                ? () => setState(() {
+                                      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+                                    })
+                                : null,
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  // Calendar Grid
-                  GridView.count(
-                    crossAxisCount: 7,
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text('Mon', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Tue', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Wed', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Thu', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Fri', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Sat', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Sun', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    itemCount: days.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    children: List.generate(35, (index) {
-                      int day = index - 3 + 1;
-                      bool isCurrentMonth = day > 0 && day <= 31;
-                      bool isToday = isCurrentMonth && day == 15;
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      mainAxisSpacing: 6,
+                      crossAxisSpacing: 6,
+                      childAspectRatio: 1.2,
+                    ),
+                    itemBuilder: (_, index) {
+                      final day = days[index];
+                      final isCurrentMonth = day.month == _focusedMonth.month;
+                      final isToday = _isSameDay(day, now);
+                      final isSelected = _selectedDate != null && _isSameDay(day, _selectedDate!);
 
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: isToday ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            isCurrentMonth ? '$day' : '',
-                            style: TextStyle(
-                              color: isToday ? Colors.white : Colors.black,
-                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                      Color bg = Colors.transparent;
+                      Color fg = Colors.black87;
+                      if (isSelected) {
+                        bg = AppColors.primary;
+                        fg = Colors.white;
+                      } else if (isToday) {
+                        bg = AppColors.primary.withOpacity(0.15);
+                        fg = AppColors.primary;
+                      }
+                      if (!isCurrentMonth) {
+                        fg = Colors.grey;
+                      }
+
+                      return Material(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: isCurrentMonth
+                              ? () => setState(() {
+                                    _selectedDate = day;
+                                  })
+                              : null,
+                          child: Center(
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(
+                                color: fg,
+                                fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
                       );
-                    }),
+                    },
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          // Upcoming Events
+          // Upcoming Events (placeholder)
           Text(
             'Upcoming Events',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -252,6 +304,29 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
         ],
       ),
     );
+  }
+
+  List<DateTime> _buildMonthDays(DateTime month) {
+    final first = DateTime(month.year, month.month, 1);
+    final startOffset = (first.weekday + 6) % 7; // convert to Mon=0
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final totalCells = 42; // 6 weeks grid
+    return List.generate(totalCells, (i) {
+      final dayNumber = i - startOffset + 1;
+      return DateTime(month.year, month.month, dayNumber);
+    });
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _monthName(int m) {
+    const names = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return names[m - 1];
   }
 
   Widget _buildEventItem(String title, String time, String emoji) {

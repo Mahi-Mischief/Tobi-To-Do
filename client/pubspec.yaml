@@ -33,6 +33,8 @@ dependencies:
   flutter_svg: ^2.0.0
   intl: ^0.20.2
   shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+  supabase_flutter: ^2.8.0
 
   # Navigation
   go_router: ^17.1.0
@@ -40,6 +42,10 @@ dependencies:
   # Utilities
   uuid: ^4.0.0
   logger: ^2.0.0
+  fl_chart: ^0.66.0
+  csv: ^5.0.0
+  pdf: ^3.10.0
+  printing: ^5.10.0
 
 dev_dependencies:
   flutter_test:
@@ -55,18 +61,31 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/lottie/
-    # Tobi animations (place the `tobi-animations` folder here as
-    # `client/assets/tobi_animations` so Flutter can bundle them)
+    - assets/dream_me_background.png
     - assets/tobi_animations/
-    # Explicit animation folders to ensure nested frames are bundled for web
-    - assets/tobi_animations/idle/
     - assets/tobi_animations/dance/
+    - assets/tobi_animations/idle/
     - assets/tobi_animations/jump_celebrate/
     - assets/tobi_animations/punch_celebrate/
     - assets/tobi_animations/sad/
     - assets/tobi_animations/think/
     - assets/tobi_animations/wave/
-    - assets/tobi_animations/app_logo.png
+    - assets/avatar/
+    - assets/avatar/bangs/
+    - assets/avatar/BEARD/
+    - assets/avatar/body/
+    - assets/avatar/bottom/
+    - assets/avatar/dress/
+    - assets/avatar/EYEBROWS/
+    - assets/avatar/EYELASHES/
+    - assets/avatar/gloves/
+    - assets/avatar/hair/
+    - assets/avatar/hair_back/
+    - assets/avatar/hair_bonus/
+    - assets/avatar/MOUTH/
+    - assets/avatar/PUPILS/
+    - assets/avatar/shoes/
+    - assets/avatar/top/
 
   # Custom fonts will be added when available
   # fonts:
