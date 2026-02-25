@@ -836,14 +836,12 @@ class _InvolvementTab extends ConsumerWidget {
 }
 
 // Providers and state notifiers
-final taskBoardProvider = StateNotifierProvider<TaskBoardNotifier, List<Task>>((ref) {
-  return TaskBoardNotifier(ref);
-});
+final taskBoardProvider = NotifierProvider<TaskBoardNotifier, List<Task>>(TaskBoardNotifier.new);
 
-class TaskBoardNotifier extends StateNotifier<List<Task>> {
-  final Ref ref;
-  TaskBoardNotifier(this.ref)
-      : super([
+class TaskBoardNotifier extends Notifier<List<Task>> {
+  @override
+  List<Task> build() {
+    return [
           Task(
             id: 't1',
             userId: 'demo',
@@ -857,7 +855,8 @@ class TaskBoardNotifier extends StateNotifier<List<Task>> {
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
             updatedAt: DateTime.now(),
           ),
-          Task(
+        ];
+  }
             id: 't2',
             userId: 'demo',
             title: 'Outline history essay',
@@ -974,17 +973,17 @@ class HabitEntry {
       : completedDates = completedDates ?? <String>{};
 }
 
-final habitTrackerProvider = StateNotifierProvider<HabitTrackerNotifier, List<HabitEntry>>((ref) {
-  return HabitTrackerNotifier();
-});
+final habitTrackerProvider = NotifierProvider<HabitTrackerNotifier, List<HabitEntry>>(HabitTrackerNotifier.new);
 
-class HabitTrackerNotifier extends StateNotifier<List<HabitEntry>> {
-  HabitTrackerNotifier()
-      : super([
+class HabitTrackerNotifier extends Notifier<List<HabitEntry>> {
+  @override
+  List<HabitEntry> build() {
+    return [
           HabitEntry(id: 'h1', title: 'Morning run'),
           HabitEntry(id: 'h2', title: 'Read 10 pages'),
           HabitEntry(id: 'h3', title: 'No soda', isBad: true),
-        ]);
+        ];
+  }
 
   void addHabit(String title, {bool isBad = false}) {
     if (title.trim().isEmpty) return;
@@ -1020,16 +1019,16 @@ class GoalEntry {
   GoalEntry({required this.id, required this.title, required this.isLongTerm, this.targetDate, this.progress = 0});
 }
 
-final goalBoardProvider = StateNotifierProvider<GoalBoardNotifier, List<GoalEntry>>((ref) {
-  return GoalBoardNotifier();
-});
+final goalBoardProvider = NotifierProvider<GoalBoardNotifier, List<GoalEntry>>(GoalBoardNotifier.new);
 
-class GoalBoardNotifier extends StateNotifier<List<GoalEntry>> {
-  GoalBoardNotifier()
-      : super([
+class GoalBoardNotifier extends Notifier<List<GoalEntry>> {
+  @override
+  List<GoalEntry> build() {
+    return [
           GoalEntry(id: 'g1', title: 'Finish semester strong', isLongTerm: false, targetDate: DateTime.now().add(const Duration(days: 30)), progress: 30),
           GoalEntry(id: 'g2', title: 'Publish app', isLongTerm: true, targetDate: DateTime.now().add(const Duration(days: 180)), progress: 10),
-        ]);
+        ];
+  }
 
   void addGoal(String title, {required bool isLongTerm}) {
     state = [...state, GoalEntry(id: 'g${DateTime.now().millisecondsSinceEpoch}', title: title, isLongTerm: isLongTerm)];
@@ -1052,16 +1051,16 @@ class ProjectEntry {
   ProjectEntry({required this.id, required this.name, this.dueDate, this.progress = 0, this.tasksDone = 0, this.tasksTotal = 5});
 }
 
-final projectBoardProvider = StateNotifierProvider<ProjectBoardNotifier, List<ProjectEntry>>((ref) {
-  return ProjectBoardNotifier();
-});
+final projectBoardProvider = NotifierProvider<ProjectBoardNotifier, List<ProjectEntry>>(ProjectBoardNotifier.new);
 
-class ProjectBoardNotifier extends StateNotifier<List<ProjectEntry>> {
-  ProjectBoardNotifier()
-      : super([
+class ProjectBoardNotifier extends Notifier<List<ProjectEntry>> {
+  @override
+  List<ProjectEntry> build() {
+    return [
           ProjectEntry(id: 'p1', name: 'Mobile app', dueDate: DateTime.now().add(const Duration(days: 40)), progress: 40, tasksDone: 8, tasksTotal: 12),
           ProjectEntry(id: 'p2', name: 'Science fair', dueDate: DateTime.now().add(const Duration(days: 15)), progress: 20, tasksDone: 2, tasksTotal: 10),
-        ]);
+        ];
+  }
 
   void addProject(String name) {
     state = [...state, ProjectEntry(id: 'p${DateTime.now().millisecondsSinceEpoch}', name: name, tasksTotal: 5)];
@@ -1106,16 +1105,16 @@ class InvolvementItem {
   });
 }
 
-final involvementProvider = StateNotifierProvider<InvolvementNotifier, List<InvolvementItem>>((ref) {
-  return InvolvementNotifier();
-});
+final involvementProvider = NotifierProvider<InvolvementNotifier, List<InvolvementItem>>(InvolvementNotifier.new);
 
-class InvolvementNotifier extends StateNotifier<List<InvolvementItem>> {
-  InvolvementNotifier()
-      : super([
+class InvolvementNotifier extends Notifier<List<InvolvementItem>> {
+  @override
+  List<InvolvementItem> build() {
+    return [
           InvolvementItem(id: 'c1', title: 'Robotics club', type: 'Club', when: DateTime.now().add(const Duration(days: 1)), trackHours: true, hoursRequired: 40, hoursCompleted: 12, hoursProspective: 6),
           InvolvementItem(id: 'v1', title: 'Food bank shift', type: 'Volunteering', when: DateTime.now().add(const Duration(days: 3)), trackHours: true, hoursRequired: 20, hoursCompleted: 5, hoursProspective: 4),
-        ]);
+        ];
+  }
 
   void addItem({required String title, required String type, required bool trackHours, double requiredHours = 0}) {
     state = [

@@ -1,29 +1,43 @@
 import fs from 'fs';
 import pg from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
 const { Pool } = pg;
 
-// Configure SSL for Postgres (Supabase requires SSL). Support three modes:
-// 1) If PROD_CA_PATH env var points to a cert file, use it and enforce rejectUnauthorized:true
-// 2) If the cert file isn't available but DB_SSL_FALLBACK_ALLOW_INSECURE is true, set rejectUnauthorized:false
-// 3) Otherwise try to use SSL with rejectUnauthorized:true and log guidance on failure
-const sslOptions = {};
+// Configure SSL for Postgres with an opt-out flag for local/non-SSL servers.
+// Modes:
+// 1) DB_SSL=false  -> disable SSL entirely (dev/local DBs that don't support SSL)
+// 2) Cert present  -> use CA file with rejectUnauthorized=true
+// 3) Fallback flag -> allow insecure SSL if cert missing and DB_SSL_FALLBACK_ALLOW_INSECURE=true
+// 4) Default       -> attempt SSL with rejectUnauthorized=true and log guidance on failure
+const dbSslSetting = (process.env.DB_SSL || '').trim().toLowerCase();
+const shouldUseSSL = dbSslSetting === '' ? true : !['false', '0', 'no', 'off'].includes(dbSslSetting);
 const certPath = process.env.PROD_CA_PATH || 'server/prod-ca-2021.crt';
-try {
-  if (fs.existsSync(certPath)) {
-    sslOptions.ca = fs.readFileSync(certPath).toString();
-    sslOptions.rejectUnauthorized = true;
-    console.log(`Using DB SSL cert from ${certPath}`);
-  } else if (process.env.DB_SSL_FALLBACK_ALLOW_INSECURE === 'true') {
-    sslOptions.rejectUnauthorized = false; // development fallback
-    console.warn('DB SSL cert not found — falling back to rejectUnauthorized=false (development only)');
-  } else {
-    // default attempt: require SSL but no CA provided
-    sslOptions.rejectUnauthorized = true;
-    console.warn('No DB SSL cert found. If connection fails, set PROD_CA_PATH or DB_SSL_FALLBACK_ALLOW_INSECURE=true for development.');
+let sslConfig = false;
+
+if (shouldUseSSL) {
+  const sslOptions = {};
+  try {
+    if (fs.existsSync(certPath)) {
+      sslOptions.ca = fs.readFileSync(certPath).toString();
+      sslOptions.rejectUnauthorized = true;
+      console.log(`Using DB SSL cert from ${certPath}`);
+    } else if (process.env.DB_SSL_FALLBACK_ALLOW_INSECURE === 'true') {
+      sslOptions.rejectUnauthorized = false; // development fallback
+      console.warn('DB SSL cert not found — falling back to rejectUnauthorized=false (development only)');
+    } else {
+      sslOptions.rejectUnauthorized = true;
+      console.warn('No DB SSL cert found. If connection fails, set PROD_CA_PATH, DB_SSL=false (local dev), or DB_SSL_FALLBACK_ALLOW_INSECURE=true.');
+    }
+  } catch (err) {
+    console.error('Error configuring DB SSL options:', err);
+    sslOptions.rejectUnauthorized = false;
   }
-} catch (err) {
-  console.error('Error configuring DB SSL options:', err);
-  sslOptions.rejectUnauthorized = false;
+  sslConfig = sslOptions;
+} else {
+  console.warn('DB_SSL=false — using non-SSL Postgres connection (development only).');
+  sslConfig = false;
 }
 
 const pool = new Pool({
@@ -32,7 +46,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: sslOptions,
+  ssl: sslConfig,
 });
 
 pool.on('error', (err) => {

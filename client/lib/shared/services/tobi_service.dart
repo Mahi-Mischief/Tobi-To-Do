@@ -51,6 +51,11 @@ class TobiService {
   void wave() => play('wave', fps: 12, loop: false);
   void dance() => play('dance', fps: 14, loop: false);
 
+  // Placeholder analytics hook
+  void logEvent(String name, {Map<String, dynamic>? metadata}) {
+    // In production, wire this to analytics provider; keep lightweight in demo.
+  }
+
   /// Return whether Tobi should appear on a given navigation index.
   bool shouldShowOnIndex(int index) {
     // Default: show on Dashboard, Plan, Focus, Growth (0..3), hide on Profile (4)
