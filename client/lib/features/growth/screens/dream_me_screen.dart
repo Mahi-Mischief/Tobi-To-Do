@@ -150,10 +150,6 @@ class _DreamMeScreenState extends ConsumerState<DreamMeScreen> {
     );
   }
 
-  Widget _buildHero(BuildContext context, AsyncValue<DreamProfile?> profileAsync) {
-    return const SizedBox.shrink();
-  }
-
   Widget _buildHeroCard(
     BuildContext context,
     AsyncValue<dynamic> authState,
@@ -190,7 +186,10 @@ class _DreamMeScreenState extends ConsumerState<DreamMeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.white.withOpacity(0.05), Colors.white.withOpacity(0.35)],
+                        colors: [
+                          Colors.white.withValues(alpha: 0.05),
+                          Colors.white.withValues(alpha: 0.35),
+                        ],
                       ),
                     ),
                   ),
@@ -209,7 +208,7 @@ class _DreamMeScreenState extends ConsumerState<DreamMeScreen> {
                       const Spacer(),
                       Chip(
                         label: Text('${completion.toStringAsFixed(0)}%', style: const TextStyle(color: Colors.black87)),
-                        backgroundColor: Colors.white.withOpacity(0.8),
+                        backgroundColor: Colors.white.withValues(alpha: 0.8),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                     ],
@@ -262,7 +261,7 @@ class _DreamMeScreenState extends ConsumerState<DreamMeScreen> {
                               child: LinearProgressIndicator(
                                 value: completion / 100,
                                 minHeight: 8,
-                                backgroundColor: Colors.white.withOpacity(0.5),
+                                backgroundColor: Colors.white.withValues(alpha: 0.5),
                                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                               ),
                             ),
@@ -271,7 +270,7 @@ class _DreamMeScreenState extends ConsumerState<DreamMeScreen> {
                       ),
                       const SizedBox(width: 12),
                       FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.9)),
+                        style: FilledButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.9)),
                         onPressed: () => _saveProfile(),
                         icon: const Icon(Icons.flag, color: Colors.black87),
                         label: const Text('Update', style: TextStyle(color: Colors.black87)),

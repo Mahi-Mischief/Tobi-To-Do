@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'radius.dart';
+import 'spacing.dart';
 
-// Re-export common theme helpers so screens can import only `app_theme.dart`
+// Re-export tokens so callers can import only `app_theme.dart`.
 export 'app_colors.dart';
+export 'spacing.dart';
+export 'radius.dart';
 
 class AppTheme {
-  // Light Theme
   static ThemeData get lightTheme {
-    final textTheme = GoogleFonts.poppinsTextTheme().apply(
+    final baseText = GoogleFonts.poppinsTextTheme().apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
@@ -17,117 +20,110 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.background,
+      primaryColor: AppColors.primaryMedium,
+      scaffoldBackgroundColor: AppColors.primaryLight,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primary,
-        surface: AppColors.surface,
+        primary: AppColors.primaryMedium,
+        secondary: AppColors.primaryButtonBlue,
+        surface: AppColors.cardBackground,
         onSurface: AppColors.textPrimary,
+        background: AppColors.primaryLight,
       ),
-      textTheme: textTheme.copyWith(
-        titleLarge: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-        bodyLarge: textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
-        bodyMedium: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      textTheme: baseText.copyWith(
+        headlineLarge: baseText.headlineLarge?.merge(AppTextStyles.headlineLarge).copyWith(color: AppColors.textPrimary),
+        headlineMedium: baseText.headlineMedium?.merge(AppTextStyles.headlineMedium).copyWith(color: AppColors.textPrimary),
+        headlineSmall: baseText.headlineSmall?.merge(AppTextStyles.headlineSmall).copyWith(color: AppColors.textPrimary),
+        titleLarge: baseText.titleLarge?.merge(AppTextStyles.titleLarge).copyWith(color: AppColors.textPrimary),
+        titleMedium: baseText.titleMedium?.merge(AppTextStyles.titleMedium).copyWith(color: AppColors.textPrimary),
+        titleSmall: baseText.titleSmall?.merge(AppTextStyles.titleSmall).copyWith(color: AppColors.textPrimary),
+        bodyLarge: baseText.bodyLarge?.merge(AppTextStyles.bodyLarge).copyWith(color: AppColors.textPrimary),
+        bodyMedium: baseText.bodyMedium?.merge(AppTextStyles.bodyMedium).copyWith(color: AppColors.textSecondary),
+        bodySmall: baseText.bodySmall?.merge(AppTextStyles.bodySmall).copyWith(color: AppColors.textSecondary),
+        labelLarge: baseText.labelLarge?.merge(AppTextStyles.labelLarge).copyWith(color: AppColors.textPrimary),
+        labelMedium: baseText.labelMedium?.merge(AppTextStyles.labelMedium).copyWith(color: AppColors.textSecondary),
+        labelSmall: baseText.labelSmall?.merge(AppTextStyles.labelSmall).copyWith(color: AppColors.textSecondary),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        surfaceTintColor: Colors.transparent,
-        titleTextStyle: textTheme.titleLarge?.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w700,
-        ),
+        titleTextStyle: baseText.titleLarge?.merge(AppTextStyles.titleLarge).copyWith(color: AppColors.textPrimary),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceSoft,
-        selectedItemColor: AppColors.primary,
+        backgroundColor: AppColors.cardBackground,
+        selectedItemColor: AppColors.primaryMedium,
         unselectedItemColor: AppColors.textSecondary,
         elevation: 8,
         type: BottomNavigationBarType.fixed,
       ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 10,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.surface,
+      cardTheme: CardTheme(
+        color: AppColors.cardBackground,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
-          side: const BorderSide(color: AppColors.border),
+          side: const BorderSide(color: AppColors.cardOutline, width: 1),
         ),
+        elevation: 6,
+        shadowColor: AppColors.shadowSoft,
+        margin: EdgeInsets.zero,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.primaryLight,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderSide: const BorderSide(color: AppColors.cardOutline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderSide: const BorderSide(color: AppColors.cardOutline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          borderSide: const BorderSide(color: AppColors.primaryMedium, width: 1.2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryButtonBlue,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
           elevation: 0,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          foregroundColor: AppColors.primaryMedium,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.surfaceSoft,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          borderSide: const BorderSide(color: AppColors.primary),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-      dividerColor: AppColors.border,
+      dividerColor: AppColors.cardOutline,
     );
   }
 
-  // Dark Theme
   static ThemeData get darkTheme {
-    // Basic dark theme fallback; primary experience is light/pastel.
+    // Pastel theme is primary; dark is minimal for compatibility.
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: Colors.black,
-      appBarTheme: const AppBarTheme(
+      primaryColor: AppColors.primaryMedium,
+      colorScheme: const ColorScheme.dark(primary: AppColors.primaryMedium),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: Colors.black,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.primaryMedium,
         unselectedItemColor: Colors.white70,
-        elevation: 8,
-      ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 8,
       ),
     );
   }
 
-  // Compatibility color getters used across older screens
-  static Color get primaryColor => AppColors.primary;
-  static Color get successColor => AppColors.success;
-  static Color get warningColor => AppColors.warning;
+  // Backward-compat getters
+  static Color get primaryColor => AppColors.primaryMedium;
+  static Color get successColor => AppColors.pastelGreen;
+  static Color get warningColor => AppColors.pastelYellowMedium;
 }
 

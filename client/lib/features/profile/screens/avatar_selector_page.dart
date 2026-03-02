@@ -196,14 +196,21 @@ class _AvatarSelectorPageState extends ConsumerState<AvatarSelectorPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        final navigator = Navigator.of(context);
                         ref.read(avatarProvider.notifier).setConfig(_config);
                         final auth = ref.read(authProvider).value;
                         if (auth != null) {
                           await ref.read(avatarProvider.notifier).save(auth.id);
                         }
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                        }
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Avatar saved'),
+                            duration: Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        navigator.pop();
                       },
                       child: const Text('Save'),
                     ),

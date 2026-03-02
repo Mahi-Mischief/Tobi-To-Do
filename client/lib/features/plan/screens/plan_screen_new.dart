@@ -255,7 +255,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
                         bg = AppColors.primary;
                         fg = Colors.white;
                       } else if (isToday) {
-                        bg = AppColors.primary.withOpacity(0.15);
+                        bg = AppColors.primary.withValues(alpha: 0.15);
                         fg = AppColors.primary;
                       }
                       if (!isCurrentMonth) {
@@ -309,7 +309,6 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
   List<DateTime> _buildMonthDays(DateTime month) {
     final first = DateTime(month.year, month.month, 1);
     final startOffset = (first.weekday + 6) % 7; // convert to Mon=0
-    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final totalCells = 42; // 6 weeks grid
     return List.generate(totalCells, (i) {
       final dayNumber = i - startOffset + 1;

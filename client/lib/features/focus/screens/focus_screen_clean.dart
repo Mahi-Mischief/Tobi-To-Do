@@ -235,7 +235,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                       _breakMinutes = v ? 10 : 5;
                       _secondsRemaining = _focusMinutes * 60;
                     }),
-                    activeColor: Colors.greenAccent,
+                    thumbColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.selected) ? Colors.greenAccent : null,
+                    ),
                   ),
                   const Text('Deep focus', style: TextStyle(color: Colors.white70)),
                 ]),

@@ -224,8 +224,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                       ),
                     ),
                   ),
-                )
-                .toList(),
+                ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(

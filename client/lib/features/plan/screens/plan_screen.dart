@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
-import 'package:tobi_todo/models/goal_model.dart';
-import 'package:tobi_todo/models/habit_model.dart';
 import 'package:tobi_todo/models/task_model.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
 
@@ -23,6 +21,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
   late DateTime _selectedDay;
   final _taskSearchController = TextEditingController();
   _TaskFilter _taskFilter = _TaskFilter.all;
+  final Map<String, int> _quadrantOverrides = {};
 
   @override
   void initState() {
@@ -143,15 +142,32 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
           child: view == TaskView.list
               ? _TaskList(tasks: filtered)
               : view == TaskView.matrix
-                  ? _EisenhowerMatrix(tasks: filtered)
+                  ? _EisenhowerMatrix(
+                      tasks: filtered,
+                      quadrantFor: _quadrantFor,
+                      onMove: _setQuadrant,
+                    )
                   : _KanbanBoard(tasks: filtered),
         ),
-        const Divider(height: 1),
-        const SizedBox(height: 8),
-        const Text('Quick Eisenhower view'),
-        SizedBox(height: 200, child: _EisenhowerMatrix(tasks: filtered, dense: true)),
       ],
     );
+  }
+
+  int _quadrantFor(Task t) {
+    final override = _quadrantOverrides[t.id];
+    if (override != null) return override;
+    final dueSoon = t.dueDate != null && t.dueDate!.difference(DateTime.now()).inDays <= 2;
+    final important = t.priority == TaskPriority.high || t.category.toLowerCase().contains('exam');
+    if (important && dueSoon) return 1;
+    if (important && !dueSoon) return 2;
+    if (!important && dueSoon) return 3;
+    return 4;
+  }
+
+  void _setQuadrant(Task task, int quadrant) {
+    setState(() {
+      _quadrantOverrides[task.id] = quadrant;
+    });
   }
 
   List<Task> _filterTasks(List<Task> tasks, _TaskFilter filter, String query) {
@@ -306,68 +322,101 @@ class _TaskList extends ConsumerWidget {
 
 class _EisenhowerMatrix extends ConsumerWidget {
   final List<Task> tasks;
-  final bool dense;
-  const _EisenhowerMatrix({required this.tasks, this.dense = false});
+  final int Function(Task) quadrantFor;
+  final void Function(Task, int) onMove;
+
+  const _EisenhowerMatrix({required this.tasks, required this.quadrantFor, required this.onMove});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quadrants = [
-      ('Do now', Colors.red.shade100, (Task t) => _quadrant(t) == 1),
-      ('Schedule', Colors.orange.shade100, (Task t) => _quadrant(t) == 2),
-      ('Delegate', Colors.blue.shade100, (Task t) => _quadrant(t) == 3),
-      ('Eliminate', Colors.green.shade100, (Task t) => _quadrant(t) == 4),
+      ('Do now', Colors.red.shade100, (Task t) => quadrantFor(t) == 1),
+      ('Schedule', Colors.orange.shade100, (Task t) => quadrantFor(t) == 2),
+      ('Delegate', Colors.blue.shade100, (Task t) => quadrantFor(t) == 3),
+      ('Eliminate', Colors.green.shade100, (Task t) => quadrantFor(t) == 4),
     ];
 
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
-      physics: dense ? const NeverScrollableScrollPhysics() : null,
+      physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       padding: const EdgeInsets.all(12),
-      childAspectRatio: dense ? 2 : 1.2,
-      children: quadrants.map((q) {
+      childAspectRatio: 1.2,
+      children: quadrants.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final q = entry.value;
         final items = tasks.where(q.$3).toList();
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: q.$2, borderRadius: BorderRadius.circular(14)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(q.$1, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              if (items.isEmpty) const Text('No tasks here')
-              else
-                ...items.map(
-                  (t) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        _PriorityDot(priority: t.priority),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(t.title, maxLines: 2, overflow: TextOverflow.ellipsis)),
-                        IconButton(
-                          icon: const Icon(Icons.open_in_new, size: 18),
-                          onPressed: () => ref.read(taskBoardProvider.notifier).cycleQuadrant(t.id),
+        return DragTarget<Task>(
+          onWillAcceptWithDetails: (_) => true,
+          onAcceptWithDetails: (details) => onMove(details.data, idx + 1),
+          builder: (context, candidateData, rejectedData) {
+            final isActive = candidateData.isNotEmpty;
+            final hoveredColor = q.$2.withValues(alpha: 0.7);
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isActive ? hoveredColor : q.$2,
+                borderRadius: BorderRadius.circular(14),
+                border: isActive ? Border.all(color: Colors.blueAccent, width: 2) : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(q.$1, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  if (items.isEmpty)
+                    Text(isActive ? 'Release to move here' : 'No tasks here')
+                  else
+                    ...items.map(
+                      (t) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: LongPressDraggable<Task>(
+                          data: t,
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 220),
+                              child: Chip(
+                                label: Text(t.title, overflow: TextOverflow.ellipsis),
+                                backgroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.4,
+                            child: _TaskRow(task: t),
+                          ),
+                          child: _TaskRow(task: t),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         );
       }).toList(),
     );
   }
+}
 
-  int _quadrant(Task t) {
-    final dueSoon = t.dueDate != null && t.dueDate!.difference(DateTime.now()).inDays <= 2;
-    final important = t.priority == TaskPriority.high || t.category.toLowerCase().contains('exam');
-    if (important && dueSoon) return 1;
-    if (important && !dueSoon) return 2;
-    if (!important && dueSoon) return 3;
-    return 4;
+class _TaskRow extends StatelessWidget {
+  final Task task;
+  const _TaskRow({required this.task});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _PriorityDot(priority: task.priority),
+        const SizedBox(width: 8),
+        Expanded(child: Text(task.title, maxLines: 2, overflow: TextOverflow.ellipsis)),
+        const Icon(Icons.drag_indicator, size: 18, color: Colors.black54),
+      ],
+    );
   }
 }
 
@@ -729,7 +778,7 @@ class _InvolvementTab extends ConsumerWidget {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Type: ${i.type} • When: ${DateFormat('MMM d, h:mma').format(i.when)}'),
+                  Text('Type: ${i.type} ΓÇó When: ${DateFormat('MMM d, h:mma').format(i.when)}'),
                   if (i.trackHours)
                     Text('Hours ${i.hoursCompleted}/${i.hoursRequired} (${i.hoursProspective} prospective)'),
                 ],
@@ -855,8 +904,7 @@ class TaskBoardNotifier extends Notifier<List<Task>> {
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
             updatedAt: DateTime.now(),
           ),
-        ];
-  }
+          Task(
             id: 't2',
             userId: 'demo',
             title: 'Outline history essay',
@@ -895,7 +943,8 @@ class TaskBoardNotifier extends Notifier<List<Task>> {
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
-        ]);
+        ];
+  }
 
   void setStatus(String id, TaskStatus status) {
     state = state.map((t) => t.id == id ? t.copyWith(status: status, updatedAt: DateTime.now()) : t).toList();

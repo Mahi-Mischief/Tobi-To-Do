@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tobi_todo/models/avatar_config.dart';
 import 'package:tobi_todo/services/avatar_remote_service.dart';
 
@@ -14,7 +13,7 @@ class AvatarNotifier extends Notifier<AvatarConfig> {
     return AvatarConfig.defaults;
   }
 
-  AvatarRemoteService get _remote => AvatarRemoteService(Supabase.instance.client);
+  AvatarRemoteService get _remote => AvatarRemoteService();
 
   void updatePart({
     String? body,

@@ -82,6 +82,66 @@ Every feature belongs to exactly ONE of these:
 
 ---
 
+## 🖥️ UI Walkthrough & Control Reference
+
+This section calls out every major screen, panel, button, and interaction so you know what exists and where to click.
+
+### Global Chrome (applies everywhere)
+- Bottom navigation: Dashboard · Plan · Focus · Growth · Profile.
+- Floating Tobi AI orb: tap to open AI panel (breakdown, schedule, motivation). Long-press to pin/unpin.
+- App bar: contextual title + action icons (search, filter, overflow where relevant).
+- Pull-to-refresh: available on list-heavy screens (tasks, goals, habits).
+
+### Dashboard
+- Header: Tobi greeting + avatar chip (opens Profile).
+- Today strip: summary cards for Tasks Due, Habits Today, Events, and Focus goal; each card navigates to its tab.
+- Quick stats row: Productivity %, Discipline, Life Balance gauges; tap to open Insights in Growth.
+- Streak widget: shows longest and current streaks; tap for streak history.
+- XP bar: shows current level and progress; tap to open Achievements.
+
+### Plan (Calendar, Tasks, Projects)
+- Tabs: Calendar | To-Do | Habits | Goals | Projects | Involvement.
+- Search bar (To-Do): fuzzy contains search across task titles.
+- Filter chips: All · Today · Overdue · Upcoming · This week · This month.
+- View toggle: List · Eisenhower · Kanban.
+- List view: cards with priority dot, title, due text, status chip; tap a card to cycle status.
+- Eisenhower matrix: 4 quadrants (Do now, Schedule, Delegate, Eliminate). Long-press to drag a task; drop onto another quadrant to move it visually; hover highlight shows target.
+- Kanban: columns (To Do, In Progress, Done) with cards; status menu on each card to move tasks.
+- Calendar tab: month picker + selected-day task list.
+- Habits tab: list of habit entries with completion toggles per day (checkbox grid).
+- Goals tab: goal cards with progress sliders and target dates.
+- Projects tab: project cards with progress, tasks done/total, and due date; “Add project” button at bottom.
+- Involvement tab: cards for clubs/volunteering; action button to log hours; “Add involvement” dialog with type dropdown and hour tracking toggle.
+
+### Focus (Deep Work)
+- Focus timer: start/pause/reset buttons; default 25/5 Pomodoro, editable in overflow menu.
+- Session targets: chips to pick focus goal (tasks, reading, etc.).
+- Distraction log button: quickly note interruptions.
+- Session history: list of past focus blocks with duration and tags.
+- Burnout hint banner: appears when recent load is high.
+
+### Growth (Dream Me, Goals, Reflections)
+- Hero card: avatar + “Dream Me” background; shows completion %; tap to edit profile form.
+- Profile form: fields for identity, aspirations, values; save button writes via avatar provider.
+- Alignment card: shows alignment score; refresh icon recomputes.
+- Gap analysis: list of gaps with suggested next steps.
+- Milestones: checklist with progress bars; tap to mark done.
+- Reflections: list with add/edit; pull-to-refresh reloads async providers.
+
+### Profile (Account, Settings, Avatar)
+- Avatar customizer: tabs for body, hair, outfits, extras; selecting an item updates preview.
+- Save button: writes avatar config (guards mounted after async save).
+- Reset button: restores defaults.
+- Account section: email, plan type; buttons for sign out and data export.
+- Theme toggle: light/dark.
+- Integrations: Google/Apple placeholders.
+
+### Assist (AI Panel)
+- Quick actions: “Break down task”, “Schedule my day”, “Motivate me”.
+- Suggestions feed: cards with recommended actions; accept applies, dismiss hides.
+- Reflection generator: weekly summary button (planned).
+
+
 ## 🤖 Tobi AI Assistant
 
 **Tobi is NOT a tab.** He's a persistent floating companion who:

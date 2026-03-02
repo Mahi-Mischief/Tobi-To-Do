@@ -12,7 +12,8 @@ import focusRoutes from './routes/focusRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import gamificationRoutes from './routes/gamificationRoutes.js';
 import dreamMeRoutes from './routes/dreamMeRoutes.js';
-// import aiRoutes from './routes/aiRoutes.js'; // TODO: Fix ES6 module import
+import aiRoutes from './routes/aiRoutes.js';
+import avatarRoutes from './routes/avatarRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -92,7 +93,8 @@ app.use('/api/focus', focusRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/gamification', gamificationRoutes);
 app.use('/api/dream-me', dreamMeRoutes);
-// app.use('/api/ai', aiRoutes); // TODO: Fix ES6 module import
+app.use('/api/ai', aiRoutes);
+app.use('/api/avatar', avatarRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

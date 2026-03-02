@@ -64,6 +64,27 @@ export class AuthController {
     }
   }
 
+  // Exchange Firebase ID token for Supabase JWT
+  static async exchangeFirebase(req, res, next) {
+    try {
+      const { firebaseIdToken } = req.body;
+
+      if (!firebaseIdToken) {
+        return res.status(400).json({ error: 'firebaseIdToken is required' });
+      }
+
+      const { supabaseToken, uid, email } = await AuthService.exchangeFirebaseForSupabase(firebaseIdToken);
+
+      res.status(200).json({
+        success: true,
+        supabaseToken,
+        user: { id: uid, email },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // Get current user
   static async getCurrentUser(req, res, next) {
     try {

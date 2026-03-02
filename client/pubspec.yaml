@@ -19,6 +19,8 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   firebase_messaging: ^16.1.1
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
 
   # Networking & HTTP
   http: ^1.1.0
@@ -46,6 +48,7 @@ dependencies:
   csv: ^5.0.0
   pdf: ^3.10.0
   printing: ^5.10.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

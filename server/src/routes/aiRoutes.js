@@ -222,6 +222,56 @@ router.post('/gap-analysis', async (req, res) => {
 });
 
 /**
+ * POST /api/ai/workload-balance
+ * Logic: Adaptive workload balancer
+ */
+router.post('/workload-balance', async (req, res) => {
+  try {
+    const { tasks, maxHoursPerDay, startDate } = req.body;
+
+    if (!tasks || !Array.isArray(tasks)) {
+      return res.status(400).json({ error: 'tasks array required' });
+    }
+
+    const result = await AIService.adaptiveWorkloadBalance(tasks, maxHoursPerDay || 6, startDate ? new Date(startDate) : new Date());
+    res.json(result);
+  } catch (error) {
+    console.error('Workload balance error:', error);
+    res.status(500).json({ error: 'Workload balance failed', details: error.message });
+  }
+});
+
+/**
+ * POST /api/ai/reminders
+ * Logic: Context / energy aware reminders
+ */
+router.post('/reminders', (req, res) => {
+  try {
+    const { tasks, focusHistory } = req.body;
+    const result = AIService.contextAwareReminders(tasks || [], focusHistory || []);
+    res.json(result);
+  } catch (error) {
+    console.error('Reminders error:', error);
+    res.status(500).json({ error: 'Reminder generation failed', details: error.message });
+  }
+});
+
+/**
+ * POST /api/ai/consistency
+ * Logic: Long-term consistency predictor
+ */
+router.post('/consistency', (req, res) => {
+  try {
+    const { stats } = req.body;
+    const result = AIService.predictConsistency(stats || {});
+    res.json(result);
+  } catch (error) {
+    console.error('Consistency prediction error:', error);
+    res.status(500).json({ error: 'Prediction failed', details: error.message });
+  }
+});
+
+/**
  * GET /api/ai/suggestions
  * Logic: Get Tobi AI suggestions
  */

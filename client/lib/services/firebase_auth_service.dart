@@ -1,5 +1,11 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Firebase Authentication Service
 /// Handles user registration, login, logout, and session management
@@ -162,5 +168,87 @@ class FirebaseAuthService {
       debugPrint('❌ Error sending verification email: $e');
       rethrow;
     }
+  }
+
+  /// Google Sign-In (web uses popup, mobile uses GoogleSignIn SDK)
+  Future<UserCredential> signInWithGoogle() async {
+    if (_isDummy) {
+      throw Exception('Firebase Auth is not available on this platform.');
+    }
+
+    try {
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.setCustomParameters({'prompt': 'select_account'});
+        return await _firebaseAuth.signInWithPopup(provider);
+      }
+
+      final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
+      if (googleUser == null) {
+        throw Exception('Google sign-in cancelled');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _firebaseAuth.signInWithCredential(credential);
+    } catch (e) {
+      debugPrint('❌ Google sign-in error: $e');
+      rethrow;
+    }
+  }
+
+  /// Apple Sign-In (native only). Uses nonce for replay protection.
+  Future<UserCredential> signInWithApple() async {
+    if (_isDummy) {
+      throw Exception('Firebase Auth is not available on this platform.');
+    }
+
+    try {
+      if (kIsWeb) {
+        final provider = OAuthProvider('apple.com');
+        provider.addScope('email');
+        provider.addScope('name');
+        return await _firebaseAuth.signInWithPopup(provider);
+      }
+
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      return await _firebaseAuth.signInWithCredential(oauthCredential);
+    } catch (e) {
+      debugPrint('❌ Apple sign-in error: $e');
+      rethrow;
+    }
+  }
+
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 }

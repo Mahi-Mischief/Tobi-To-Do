@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../config/database.js';
+import { verifyFirebaseToken } from '../config/firebase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 
 export class AuthService {
   // Generate JWT token
@@ -167,5 +169,49 @@ export class AuthService {
     } catch (error) {
       throw error;
     }
+  }
+
+  // Exchange Firebase ID token for a Supabase JWT (used by client for RLS)
+  static async exchangeFirebaseForSupabase(firebaseIdToken) {
+    if (!firebaseIdToken) {
+      throw new Error('firebaseIdToken is required');
+    }
+
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('SUPABASE_JWT_SECRET is not configured on the server');
+    }
+
+    // Verify Firebase token
+    const decoded = await verifyFirebaseToken(firebaseIdToken);
+    const uid = decoded.uid;
+    const email = decoded.email || '';
+    const fullName = decoded.name || '';
+
+    // Upsert profile in Supabase using service role
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+
+    await supabaseAdmin.from('profiles').upsert({
+      id: uid,
+      email,
+      full_name: fullName,
+      updated_at: new Date().toISOString(),
+    });
+
+    // Issue a Supabase-compatible JWT (aud/role/sub)
+    const payload = {
+      sub: uid,
+      role: 'authenticated',
+      aud: 'authenticated',
+      email,
+    };
+
+    const supabaseToken = jwt.sign(payload, jwtSecret, {
+      expiresIn: '1h',
+    });
+
+    return { supabaseToken, uid, email };
   }
 }

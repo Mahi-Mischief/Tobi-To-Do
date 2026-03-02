@@ -151,6 +151,58 @@ class AuthNotifier extends AsyncNotifier<app_user.User?> {
       state = AsyncValue.error(e, StackTrace.current);
     }
   }
+
+  Future<void> signInWithGoogle() async {
+    debugPrint('🔄 [AUTH] Starting Google sign-in');
+    state = const AsyncValue.loading();
+    try {
+      final userCred = await firebaseAuthService.signInWithGoogle();
+      final idToken = await userCred.user?.getIdToken() ?? '';
+
+      final user = app_user.User(
+        id: userCred.user!.uid,
+        email: userCred.user!.email ?? '',
+        fullName: userCred.user!.displayName ?? '',
+        createdAt: DateTime.now(),
+      );
+
+      await secureStorage.saveToken(idToken);
+      await secureStorage.saveUserId(user.id);
+      await secureStorage.saveEmail(user.email);
+      debugPrint('✅ [AUTH] Google sign-in complete');
+
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      debugPrint('❌ [AUTH] Google sign-in error: $e');
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    debugPrint('🔄 [AUTH] Starting Apple sign-in');
+    state = const AsyncValue.loading();
+    try {
+      final userCred = await firebaseAuthService.signInWithApple();
+      final idToken = await userCred.user?.getIdToken() ?? '';
+
+      final user = app_user.User(
+        id: userCred.user!.uid,
+        email: userCred.user!.email ?? '',
+        fullName: userCred.user!.displayName ?? '',
+        createdAt: DateTime.now(),
+      );
+
+      await secureStorage.saveToken(idToken);
+      await secureStorage.saveUserId(user.id);
+      await secureStorage.saveEmail(user.email);
+      debugPrint('✅ [AUTH] Apple sign-in complete');
+
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      debugPrint('❌ [AUTH] Apple sign-in error: $e');
+      state = AsyncValue.error(e, st);
+    }
+  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, app_user.User?>(() {

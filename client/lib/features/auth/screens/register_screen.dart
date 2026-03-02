@@ -59,6 +59,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  Future<void> _registerWithGoogle() async {
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+
+    try {
+      await ref.read(authProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      setState(() => _errorMessage = 'Google sign-in failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _registerWithApple() async {
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+
+    try {
+      await ref.read(authProvider.notifier).signInWithApple();
+    } catch (e) {
+      setState(() => _errorMessage = 'Apple sign-in failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,29 +281,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Google sign-in not implemented')),
-                                ),
+                                onPressed: _isLoading ? null : _registerWithGoogle,
                                 icon: const Icon(Icons.g_mobiledata, color: Colors.black),
                                 label: const Text('Continue with Google', style: TextStyle(color: Colors.black)),
                                 style: OutlinedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   side: BorderSide(color: Colors.grey.shade300),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Apple sign-in not implemented')),
-                                ),
-                                icon: const Icon(Icons.apple, color: Colors.white),
-                                label: const Text('Continue with Apple', style: TextStyle(color: Colors.white)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),

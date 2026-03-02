@@ -16,6 +16,9 @@ const cache = new Map();
  * Call Mistral AI via Hugging Face API
  */
 async function callMistral(prompt, maxTokens = 256) {
+  if (!HF_TOKEN) {
+    throw new Error('HUGGING_FACE_API_KEY not set; cannot call Hugging Face');
+  }
   const cacheKey = `mistral_${prompt.substring(0, 50)}`;
   if (cache.has(cacheKey)) {
     console.log('[AI] Cache hit:', cacheKey);
@@ -80,9 +83,15 @@ Return as JSON array only:
       };
     } catch (error) {
       console.error('[AI] Task breakdown error:', error);
+      // Logic fallback: simple slicing of description into 3 chunks
+      const chunks = (taskDescription || taskTitle).split(/[,.;]/).filter(Boolean).map(s => s.trim());
+      const fallback = (chunks.length > 0 ? chunks : ['Plan', 'Execute', 'Review']).slice(0, 3).map((c, i) => ({
+        title: c || `Step ${i + 1}`,
+        estimatedMinutes: 30,
+      }));
       return {
-        subtasks: [{ title: taskTitle, estimatedMinutes: 30 }],
-        estimatedDuration: 30,
+        subtasks: fallback,
+        estimatedDuration: fallback.reduce((sum, t) => sum + t.estimatedMinutes, 0),
         aiGenerated: false
       };
     }
@@ -105,7 +114,12 @@ Format: [{"week":1,"milestone":"Name","tasks":["Task 1"],"reasoning":"Why"}]`;
       return { plan, aiGenerated: true };
     } catch (error) {
       console.error('[AI] Semester plan error:', error);
-      return { plan: [], aiGenerated: false };
+      // Logic fallback: evenly spaced milestones until deadline
+      const milestones = [];
+      for (let i = 1; i <= 4; i++) {
+        milestones.push({ week: i * 2, milestone: `Milestone ${i}`, tasks: [`Progress ${i * 25}%`], reasoning: 'Even pacing fallback' });
+      }
+      return { plan: milestones, aiGenerated: false };
     }
   }
 
@@ -129,7 +143,11 @@ Give brief empathetic analysis and ONE actionable step.`;
       };
     } catch (error) {
       console.error('[AI] Fallbehind analysis error:', error);
-      return { analysis: 'Try breaking down tasks into smaller steps', aiGenerated: false };
+      const missed = missedTasks || 0;
+      const rate = completionRate || 0;
+      const patterns = (failurePatterns || []).join(', ');
+      const analysis = `You missed ${missed} tasks and completed ${rate}% recently.${patterns ? ` Patterns: ${patterns}.` : ''} Focus on one high-priority task now and set a small deadline.`;
+      return { analysis, aiGenerated: false };
     }
   }
 
@@ -151,8 +169,106 @@ Return JSON: [{"step":1,"title":"Step","description":"What","metrics":"How to me
       return { steps, aiGenerated: true };
     } catch (error) {
       console.error('[AI] Goal steps error:', error);
-      return { steps: [], aiGenerated: false };
+      const fallback = [
+        { step: 1, title: 'Clarify the goal', description: 'Write what success looks like', metrics: 'Definition written' },
+        { step: 2, title: 'Break into tasks', description: 'List 3-5 tasks', metrics: 'Task list ready' },
+        { step: 3, title: 'Schedule tasks', description: 'Place tasks on calendar', metrics: 'Calendar slots filled' },
+        { step: 4, title: 'Do first task', description: 'Ship the first task within 24h', metrics: 'Task 1 done' },
+        { step: 5, title: 'Review weekly', description: 'Adjust scope based on progress', metrics: 'Weekly review logged' },
+      ];
+      return { steps: fallback, aiGenerated: false };
     }
+  }
+
+  /**
+   * Logic-based: Adaptive Workload Balancer
+   */
+  static async adaptiveWorkloadBalance(tasks = [], maxHoursPerDay = 6, startDate = new Date()) {
+    const schedule = {};
+    const overflow = [];
+    const tasksWithDefaults = tasks.map((t, idx) => ({
+      id: t.id || `task_${idx}`,
+      title: t.title || `Task ${idx + 1}`,
+      priority: t.priority || 'medium',
+      dueDate: t.dueDate ? new Date(t.dueDate) : null,
+      estimatedMinutes: Number(t.estimatedMinutes) || 30,
+    }));
+
+    const order = { high: 0, medium: 1, low: 2 };
+    tasksWithDefaults.sort((a, b) => {
+      if (order[a.priority] !== order[b.priority]) return order[a.priority] - order[b.priority];
+      if (a.dueDate && b.dueDate) return a.dueDate - b.dueDate;
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return a.estimatedMinutes - b.estimatedMinutes;
+    });
+
+    const dayMinutesCap = maxHoursPerDay * 60;
+    let cursor = new Date(startDate);
+
+    for (const task of tasksWithDefaults) {
+      let placed = false;
+      // Try from today until due date (or 14 days lookahead if no due date)
+      const lookahead = task.dueDate ? Math.max(1, Math.ceil((task.dueDate - cursor) / (1000 * 60 * 60 * 24))) : 14;
+      for (let d = 0; d <= lookahead; d++) {
+        const day = new Date(cursor);
+        day.setDate(cursor.getDate() + d);
+        const key = day.toISOString().slice(0, 10);
+        if (!schedule[key]) schedule[key] = { tasks: [], totalMinutes: 0 };
+        if (schedule[key].totalMinutes + task.estimatedMinutes <= dayMinutesCap) {
+          schedule[key].tasks.push(task);
+          schedule[key].totalMinutes += task.estimatedMinutes;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) overflow.push(task);
+    }
+
+    return { schedule, overflow, aiGenerated: false };
+  }
+
+  /**
+   * Logic-based: Context/Energy-aware reminders
+   */
+  static contextAwareReminders(tasks = [], focusHistory = []) {
+    // Derive peak windows from focus history
+    const buckets = { morning: 0, afternoon: 0, evening: 0 };
+    focusHistory.forEach(f => {
+      const hour = f.hour ?? new Date(f.start || Date.now()).getHours();
+      if (hour < 12) buckets.morning += f.minutes || 0;
+      else if (hour < 18) buckets.afternoon += f.minutes || 0;
+      else buckets.evening += f.minutes || 0;
+    });
+    const peak = Object.entries(buckets).sort((a, b) => b[1] - a[1])[0]?.[0] || 'afternoon';
+
+    const dueSoon = tasks.filter(t => {
+      if (!t.dueDate) return false;
+      const diff = (new Date(t.dueDate) - new Date()) / (1000 * 60 * 60);
+      return diff >= 0 && diff <= 48;
+    });
+
+    const reminders = dueSoon.map(t => ({
+      taskId: t.id,
+      title: t.title,
+      sendAt: peak,
+      reason: 'Due soon',
+    }));
+
+    return { reminders, peakWindow: peak, aiGenerated: false };
+  }
+
+  /**
+   * Logic-based: Long-term consistency predictor
+   */
+  static predictConsistency(stats = {}) {
+    const completionRates = stats.completionRates || [];
+    const avgStreak = stats.avgStreak || 0;
+    const recent = completionRates.slice(-7);
+    const rate = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 0;
+    const score = Math.max(0, Math.min(100, Math.round(rate * 0.6 + Math.min(avgStreak, 30) * 1.3)));
+    const outlook = score > 75 ? 'Strong consistency expected' : score > 50 ? 'Moderate consistency; keep streaks alive' : 'At risk; simplify daily goals';
+    return { score, outlook, aiGenerated: false };
   }
 
   /**

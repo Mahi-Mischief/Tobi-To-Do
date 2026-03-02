@@ -1,356 +1,351 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tobi_todo/core/theme/app_colors.dart';
-import 'package:tobi_todo/providers/gamification_provider.dart';
-import 'package:tobi_todo/features/shared/screens/tobi_dashboard_screen.dart';
-import 'package:tobi_todo/shared/services/tobi_service.dart';
-// removed unused import
-// removed unused import: task_provider
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tobi_todo/core/theme/app_theme.dart';
+import 'package:tobi_todo/features/shared/widgets/app_card.dart';
+import 'package:tobi_todo/features/shared/widgets/floating_cloud_decoration.dart';
+import 'package:tobi_todo/features/shared/widgets/pastel_button.dart';
+import 'package:tobi_todo/features/shared/widgets/section_header.dart';
+import 'package:tobi_todo/features/shared/widgets/xp_progress_bar.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
+import 'package:tobi_todo/providers/gamification_provider.dart';
+import 'package:tobi_todo/shared/services/tobi_service.dart';
 
-class DashboardScreen extends ConsumerStatefulWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final gamificationStats = ref.watch(gamificationStatsProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = AppBreakpoints.isDesktop(constraints);
+        final isTablet = AppBreakpoints.isTablet(constraints);
+        final horizontal = isDesktop ? AppSpacing.xxl : isTablet ? AppSpacing.xl : AppSpacing.md;
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
             children: [
-              // Header with user greeting
-              _buildHeader(context, authState),
-              const SizedBox(height: 24),
-
-              // Daily Briefing Button
-              _buildDailyBriefingButton(context),
-              const SizedBox(height: 20),
-
-              // Today Overview
-              _buildTodayOverview(context),
-              const SizedBox(height: 20),
-
-              // Quick Stats Row
-              gamificationStats.when(
-                data: (stats) => _buildQuickStats(context, stats),
-                loading: () => const SizedBox(
-                  height: 100,
-                  child: Center(child: CircularProgressIndicator()),
+              // Layer 1: background image + gradient
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/backgrounds/background_default.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    gradient: AppColors.defaultBackgroundGradient,
+                  ),
                 ),
-                error: (_, __) => const SizedBox.shrink(),
               ),
-              const SizedBox(height: 20),
-
-              // XP Progress Bar
-              gamificationStats.when(
-                data: (stats) => _buildXPBar(context, stats),
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+              // Layer 2: clouds and blobs
+              FloatingCloudDecoration(
+                asset: 'assets/clouds/cloud_1.svg',
+                opacity: isDesktop ? 0.25 : 0.18,
+                top: 40,
+                left: 24,
+                width: isDesktop ? 240 : 160,
               ),
-              const SizedBox(height: 20),
-
-              // Streak Preview
-              _buildStreakPreview(context),
-              const SizedBox(height: 20),
-
-              // Quick Actions
-              _buildQuickActions(context),
+              FloatingCloudDecoration(
+                asset: 'assets/clouds/cloud_3.svg',
+                opacity: 0.18,
+                top: isDesktop ? 160 : 120,
+                right: 12,
+                width: isDesktop ? 260 : 180,
+              ),
+              FloatingCloudDecoration(
+                asset: 'assets/blobs/blob_pink.svg',
+                opacity: 0.12,
+                bottom: 80,
+                left: -40,
+                width: isDesktop ? 260 : 200,
+              ),
+              FloatingCloudDecoration(
+                asset: 'assets/blobs/blob_yellow.svg',
+                opacity: 0.12,
+                bottom: 40,
+                right: -30,
+                width: isDesktop ? 240 : 180,
+              ),
+              // Layer 3: content
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: AppSpacing.xl),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Header(authState: authState),
+                          const SizedBox(height: AppSpacing.lg),
+                          PastelButton(
+                            label: 'AI Daily Briefing',
+                            icon: SvgPicture.asset('assets/icons/star_xp.svg', height: 18, colorFilter: const ColorFilter.mode(AppColors.white, BlendMode.srcIn)),
+                            onTap: () {
+                              TobiService.instance.think();
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Launching AI briefing...')));
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          SectionHeader(
+                            title: 'Today',
+                            action: Text('All synced', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _ResponsiveGrid(
+                            children: [
+                              AppCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Tasks', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    _MetricRow(label: 'Due today', value: '7'),
+                                    _MetricRow(label: 'Completed', value: '3'),
+                                    _MetricRow(label: 'Blocked', value: '1'),
+                                  ],
+                                ),
+                              ),
+                              AppCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Habits', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    _MetricRow(label: 'Scheduled', value: '5'),
+                                    _MetricRow(label: 'Done', value: '2'),
+                                    _MetricRow(label: 'Streak', value: '23d'),
+                                  ],
+                                ),
+                              ),
+                              AppCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Calendar', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    _MetricRow(label: 'Events today', value: '2'),
+                                    _MetricRow(label: 'Conflicts', value: '0'),
+                                    _MetricRow(label: 'Next focus', value: '2:00 PM'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          gamificationStats.when(
+                            data: (stats) {
+                              final xp = stats.xp ?? 0;
+                              final progress = (xp % 10000) / 10000;
+                              return AppCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text('Level ${stats.level}', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                        const SizedBox(width: AppSpacing.sm),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.pastelPinkLight,
+                                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                                          ),
+                                          child: Text('+${xp % 1000} XP today', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary)),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: AppSpacing.md),
+                                    XPProgressBar(progress: progress, label: 'Next level • ${(progress * 100).toStringAsFixed(0)}%'),
+                                  ],
+                                ),
+                              );
+                            },
+                            loading: () => const AppCard(child: SizedBox(height: 64, child: Center(child: CircularProgressIndicator()))),
+                            error: (_, __) => const SizedBox.shrink(),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          SectionHeader(
+                            title: 'Quick actions',
+                            action: PastelButton(
+                              expand: false,
+                              label: 'Start Focus',
+                              onTap: () => TobiService.instance.think(),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _ResponsiveGrid(
+                            children: const [
+                              _QuickActionCard(icon: Icons.add_task, title: 'Add task', subtitle: 'Capture and schedule'),
+                              _QuickActionCard(icon: Icons.play_arrow_rounded, title: 'Focus session', subtitle: 'Start 25/5 Pomodoro'),
+                              _QuickActionCard(icon: Icons.auto_awesome, title: 'Breakdown with AI', subtitle: 'Turn vague into steps'),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          SectionHeader(title: 'Upcoming'),
+                          const SizedBox(height: AppSpacing.md),
+                          AppCard(
+                            child: Column(
+                              children: const [
+                                _UpcomingRow(title: 'Data Structures quiz', time: 'Today • 3:00 PM', chip: 'Exam prep'),
+                                SizedBox(height: AppSpacing.sm),
+                                _UpcomingRow(title: 'AI project sync', time: 'Tomorrow • 9:00 AM', chip: 'Team'),
+                                SizedBox(height: AppSpacing.sm),
+                                _UpcomingRow(title: 'Habit check-in', time: 'Tomorrow • 7:00 PM', chip: 'Habits'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, AsyncValue<dynamic> authState) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        authState.when(
-          data: (user) {
-            return Text(
-              'Welcome back, ${user?.fullName ?? 'Tobi User'}!',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-            );
-          },
-          loading: () => const Text('Loading...'),
-          error: (_, __) => const Text('User'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDailyBriefingButton(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        // Open Tobi Dashboard for daily briefing
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TobiDashboardScreen()));
-        TobiService.instance.think();
+        );
       },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withAlpha((0.7 * 255).round())],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'AI Daily Briefing',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'See what Tobi prepared for you today',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward, color: Colors.white),
-          ],
-        ),
-      ),
     );
   }
+}
 
-  Widget _buildTodayOverview(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Today\'s Overview',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildOverviewItem('📋 Tasks', '7 tasks • 3 completed'),
-            _buildOverviewItem('🎯 Meetings', '2 meetings today'),
-            _buildOverviewItem('⚡ Habits', '5 habits to complete'),
-          ],
-        ),
-      ),
-    );
-  }
+class _Header extends StatelessWidget {
+  const _Header({required this.authState});
+  final AsyncValue<dynamic> authState;
 
-  Widget _buildOverviewItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  @override
+  Widget build(BuildContext context) {
+    return authState.when(
+      data: (user) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('Dashboard', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppSpacing.xs),
+          Text('Welcome back, ${user?.fullName ?? 'Tobi friend'}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+        ],
+      ),
+      loading: () => const CircularProgressIndicator(),
+      error: (_, __) => Text('Dashboard', style: Theme.of(context).textTheme.headlineSmall),
+    );
+  }
+}
+
+class _ResponsiveGrid extends StatelessWidget {
+  const _ResponsiveGrid({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = AppBreakpoints.isMobile(constraints);
+        final crossAxisCount = isMobile ? 1 : 3;
+        final spacing = isMobile ? AppSpacing.md : AppSpacing.lg;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: children
+              .map((c) => SizedBox(
+                    width: isMobile ? double.infinity : (constraints.maxWidth - spacing * 2) / 3,
+                    child: c,
+                  ))
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary))),
+          Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildQuickStats(BuildContext context, dynamic stats) {
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({required this.icon, required this.title, required this.subtitle});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            height: 44,
+            width: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+            ),
+            child: Icon(icon, color: AppColors.primaryButtonBlue),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: AppSpacing.xs),
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingRow extends StatelessWidget {
+  const _UpcomingRow({required this.title, required this.time, required this.chip});
+  final String title;
+  final String time;
+  final String chip;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard('Productivity', '${stats.level * 7}%', Colors.blue),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard('Discipline', '${(stats.xp / 100).toInt()}%', Colors.green),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard('Balance', '62%', Colors.orange),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, Color color) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildXPBar(BuildContext context, dynamic stats) {
-    int xp = stats.xp ?? 0;
-    double progress = (xp % 10000) / 10000;
-    
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Level ${stats.level} - XP Progress',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${xp % 10000} / 10,000',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 12,
-                backgroundColor: Colors.grey[300],
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStreakPreview(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Text('🔥', style: TextStyle(fontSize: 32)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Current Streak',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '23 days',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Keep the streak alive! 🔥')),
-                );
-              },
-              child: const Text('Keep Going!'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: AppSpacing.xs),
+              Text(time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Opening Add Task dialog...')),
-                  );
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Task'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Starting Focus Session...')),
-                  );
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Focus'),
-              ),
-            ),
-          ],
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: AppColors.pastelYellowLight,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: const Border.fromBorderSide(BorderSide(color: AppColors.cardOutline)),
+          ),
+          child: Text(chip, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary)),
         ),
       ],
     );
