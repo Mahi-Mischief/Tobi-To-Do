@@ -1,6 +1,7 @@
 import fs from 'fs';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { getContextUser } from '../middleware/requestContext.js';
 
 dotenv.config();
 const { Pool } = pg;
@@ -130,6 +131,23 @@ export async function initializeDatabase() {
       );
     `);
 
+    // ------------------ Habit Tracking Table ------------------
+    // Stores each completion event for sync and history.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS habit_tracking (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        completion_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) DEFAULT 'completed',
+        note TEXT,
+        source VARCHAR(50) DEFAULT 'manual',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (habit_id, completion_date)
+      );
+    `);
+
     // ------------------ Habit-Goal Links Table ------------------
     await client.query(`
       CREATE TABLE IF NOT EXISTS habit_goal_links (
@@ -195,9 +213,64 @@ export async function initializeDatabase() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_habit_tracking_user_date ON habit_tracking(user_id, completion_date);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_habit_tracking_habit_date ON habit_tracking(habit_id, completion_date);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_focus_sessions_user_id ON focus_sessions(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_achievements_user_id ON achievements(user_id);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_reflections_user_id ON reflections(user_id);');
+
+    // ------------------ Row-Level Security ------------------
+    const rlsTables = [
+      'tasks',
+      'goals',
+      'habits',
+      'habit_tracking',
+      'focus_sessions',
+      'achievements',
+      'dream_profiles',
+      'reflections',
+    ];
+
+    for (const table of rlsTables) {
+      await client.query(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;`);
+      await client.query(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY;`);
+      await client.query(`DROP POLICY IF EXISTS ${table}_owner_isolation ON ${table};`);
+      await client.query(`
+        CREATE POLICY ${table}_owner_isolation ON ${table}
+        USING (
+          current_setting('app.current_user_id', true)::uuid IS NOT NULL
+          AND user_id = current_setting('app.current_user_id', true)::uuid
+        )
+        WITH CHECK (
+          current_setting('app.current_user_id', true)::uuid IS NOT NULL
+          AND user_id = current_setting('app.current_user_id', true)::uuid
+        );
+      `);
+    }
+
+    // Habit-goal links rely on habit ownership for access control.
+    await client.query('ALTER TABLE habit_goal_links ENABLE ROW LEVEL SECURITY;');
+    await client.query('ALTER TABLE habit_goal_links FORCE ROW LEVEL SECURITY;');
+    await client.query('DROP POLICY IF EXISTS habit_goal_links_owner_isolation ON habit_goal_links;');
+    await client.query(`
+      CREATE POLICY habit_goal_links_owner_isolation ON habit_goal_links
+      USING (
+        current_setting('app.current_user_id', true)::uuid IS NOT NULL AND
+        EXISTS (
+          SELECT 1 FROM habits h
+          WHERE h.id = habit_goal_links.habit_id
+          AND h.user_id = current_setting('app.current_user_id', true)::uuid
+        )
+      )
+      WITH CHECK (
+        current_setting('app.current_user_id', true)::uuid IS NOT NULL AND
+        EXISTS (
+          SELECT 1 FROM habits h
+          WHERE h.id = habit_goal_links.habit_id
+          AND h.user_id = current_setting('app.current_user_id', true)::uuid
+        )
+      );
+    `);
 
     client.release();
     console.log('Database initialized successfully');
@@ -212,11 +285,32 @@ export function getPool() {
 }
 
 export async function query(text, params) {
-  return pool.query(text, params);
+  const userId = getContextUser();
+
+  // When no authenticated user is present (public routes), run without RLS context.
+  if (!userId) {
+    return pool.query(text, params);
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SET LOCAL app.current_user_id = $1', [userId]);
+    const result = await client.query(text, params);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getClient() {
   return pool.connect();
 }
 
-export { pool as db };
+export const db = {
+  query,
+};

@@ -419,7 +419,7 @@ CREATE TABLE reflections (
 - [ ] Skill tree preview
 - [ ] Dark mode toggle
 - [ ] Notification settings
-- [ ] Integrations (Google, Apple)
+- [ ] Integrations (Google)
 - [ ] Data export
 - [ ] Logout button
 

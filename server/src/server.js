@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import { initializeDatabase } from './config/database.js';
 import { initializeFirebase } from './config/firebase.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { sanitizeInput } from './middleware/sanitize.js';
+import { requestContextMiddleware } from './middleware/requestContext.js';
+import { authLimiter } from './middleware/rateLimit.js';
 import authRoutes from './routes/authRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import habitRoutes from './routes/habitRoutes.js';
@@ -78,6 +81,9 @@ if (allowedOrigins && allowedOrigins.length > 0) {
 }
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeInput);
+app.use(requestContextMiddleware);
+app.use('/api', authLimiter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

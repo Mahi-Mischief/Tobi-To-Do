@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:tobi_todo/core/theme/app_theme.dart';
 
@@ -17,17 +18,22 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.fromBorderSide(border ?? const BorderSide(color: AppColors.cardOutline)),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadowSoft, blurRadius: 18, offset: Offset(0, 10)),
-        ],
+    final card = ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.large),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(AppRadius.large),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFFD4C1EC).withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 8)),
+            ],
+          ),
+          padding: padding,
+          child: child,
+        ),
       ),
-      padding: padding,
-      child: child,
     );
 
     if (onTap == null) return card;

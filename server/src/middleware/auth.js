@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { setContextUser } from './requestContext.js';
 
 export function authMiddleware(req, res, next) {
   try {
@@ -11,6 +12,7 @@ export function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
+    setContextUser(decoded.userId);
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Invalid token' });
@@ -25,6 +27,7 @@ export function optionalAuthMiddleware(req, res, next) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.userId = decoded.userId;
       req.userEmail = decoded.email;
+      setContextUser(decoded.userId);
     }
     
     next();

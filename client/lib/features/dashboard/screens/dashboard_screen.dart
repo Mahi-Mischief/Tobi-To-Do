@@ -34,7 +34,7 @@ class DashboardScreen extends ConsumerWidget {
                 child: Container(
                   decoration: const BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage('assets/backgrounds/background_default.png'),
+                      image: AssetImage('assets/background/background_default.png'),
                       fit: BoxFit.cover,
                     ),
                     gradient: AppColors.defaultBackgroundGradient,
@@ -343,7 +343,6 @@ class _UpcomingRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.pastelYellowLight,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: const Border.fromBorderSide(BorderSide(color: AppColors.cardOutline)),
           ),
           child: Text(chip, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textPrimary)),
         ),

@@ -24,17 +24,25 @@ export async function getTaskCompletionRate(userId, days = 30) {
  */
 export async function getHabitConsistency(userId, days = 7) {
   const query = `
+    WITH total_habits AS (
+      SELECT COUNT(*) AS total FROM habits WHERE user_id = $1
+    ),
+    recent_habits AS (
+      SELECT COUNT(DISTINCT habit_id) AS recent
+      FROM habit_tracking
+      WHERE user_id = $1
+        AND completion_date >= CURRENT_DATE - ($2::int - 1)
+    )
     SELECT
-      COUNT(*) as total,
-      COUNT(CASE WHEN last_completed >= NOW() - INTERVAL '${days} days' THEN 1 END) as recent
-    FROM habits
-    WHERE user_id = $1
+      CASE
+        WHEN total = 0 THEN 0
+        ELSE ROUND((recent::decimal / total) * 100)
+      END AS consistency
+    FROM total_habits, recent_habits;
   `;
 
-  const result = await db.query(query, [userId]);
-  const { total, recent } = result.rows[0];
-
-  return total > 0 ? Math.round((recent / total) * 100) : 0;
+  const result = await db.query(query, [userId, days]);
+  return result.rows[0].consistency;
 }
 
 /**
@@ -108,8 +116,8 @@ export async function getWeeklySummary(userId) {
       AND completed_at >= $2
     `,
     habitsCompleted: `
-      SELECT COUNT(*) as count FROM habits
-      WHERE user_id = $1 AND last_completed >= $2
+      SELECT COUNT(*) as count FROM habit_tracking
+      WHERE user_id = $1 AND completion_date >= $2::date
     `,
     focusMinutes: `
       SELECT COALESCE(SUM(duration_minutes), 0) as total FROM focus_sessions

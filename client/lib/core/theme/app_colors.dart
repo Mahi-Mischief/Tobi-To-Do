@@ -7,9 +7,11 @@ class AppColors {
   static const Color primaryMedium = Color(0xFFD0D5FE);
   static const Color primaryDark = Color(0xFFA4A9F5);
   static const Color primaryLight = Color(0xFFF2F0FE); // background
+  static const Color primary = Color(0xFFD0D5FE);
 
   // Actions
   static const Color primaryButtonBlue = Color(0xFF89A9FE);
+  static const Color plan = Color(0xFF89A9FE);
 
   // Pastels / accents
   static const Color cardBackground = Color(0xFFF9F3FE);
@@ -19,17 +21,35 @@ class AppColors {
   static const Color pastelYellowMedium = Color(0xFFFDE5CA);
   static const Color pastelYellowLight = Color(0xFFFDF2D6);
   static const Color pastelGreen = Color(0xFFAFD1CA);
+  static const Color accentMint = Color(0xFFAFD1CA);
+  static const Color accentPeach = Color(0xFFFDE5CA);
+  static const Color accentBlue = Color(0xFF89A9FE);
+  static const Color accentPink = Color(0xFFEEBCD8);
+
+  // Additional colors needed
+  static const Color border = Color(0xFFFBE6F2);
+  static const Color info = Color(0xFF89A9FE);
+  static const Color success = Color(0xFFAFD1CA);
+  static const Color surfaceSoft = Color(0xFFF2F0FE);
+  static const Color surface = Color(0xFFF9F3FE);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
 
   // Star gradients
   static const Color starLight = Color(0xFFFFF3C9);
   static const Color starDark = Color(0xFFF0D2B2);
+
+  // Background gradient
+  static const List<Color> backgroundGradient = [
+    Color(0xFFA4A9F5),
+    Color(0xFFF2F0FE),
+  ];
 
   // Text
   static const Color textPrimary = Color(0xFF4B4B6A);
   static const Color textSecondary = Color(0xFF6F6F9E);
 
   // Utility
-  static const Color white = Color(0xFFFFFFFF);
   static const Color overlay = Color(0x66FFFFFF);
 
   // Shadows (soft, never pure black)
@@ -37,9 +57,9 @@ class AppColors {
 
   // Gradient helpers
   static const LinearGradient defaultBackgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [primaryDark, primaryLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFA3D4FF), Color(0xFFC9B4E0), Color(0xFFFCD9EB), Color(0xFFF2F0FE)],
   );
 
   static const LinearGradient focusBackgroundGradient = LinearGradient(

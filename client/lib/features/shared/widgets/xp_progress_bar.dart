@@ -51,13 +51,17 @@ class XPProgressBar extends StatelessWidget {
                       duration: const Duration(milliseconds: 320),
                       curve: Curves.easeOut,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [AppColors.starLight, AppColors.starDark]),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [AppColors.starLight, AppColors.starDark],
+                        ),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                   ),
                   Positioned(
-                    left: starX,
+                    left: starX.toDouble(),
                     child: SvgPicture.asset(starAsset, height: 22),
                   ),
                 ],

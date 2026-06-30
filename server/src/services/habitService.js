@@ -101,9 +101,7 @@ export async function deleteHabit(habitId) {
 export async function completeHabit(habitId) {
   const habit = await getHabitById(habitId);
 
-  const lastCompleted = habit.lastCompleted
-    ? new Date(habit.lastCompleted)
-    : null;
+  const lastCompleted = habit.lastCompleted ? new Date(habit.lastCompleted) : null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -122,7 +120,7 @@ export async function completeHabit(habitId) {
 
     if (daysDifference === 0) {
       // Already completed today
-      return new Habit(habit);
+      return habit;
     } else if (daysDifference === 1) {
       // Completed yesterday - increment streak
       newStreak = habit.streakCount + 1;
@@ -147,7 +145,19 @@ export async function completeHabit(habitId) {
   `;
 
   const result = await db.query(query, [newStreak, newBestStreak, habitId]);
-  return new Habit(result.rows[0]);
+  const updatedHabit = new Habit(result.rows[0]);
+
+  // Record completion in tracking table (one row per day per habit)
+  await db.query(
+    `
+      INSERT INTO habit_tracking (habit_id, user_id, completion_date, completed_at, status)
+      VALUES ($1, $2, $3, NOW(), 'completed')
+      ON CONFLICT (habit_id, completion_date) DO NOTHING
+    `,
+    [habitId, habit.user_id, today]
+  );
+
+  return updatedHabit;
 }
 
 /**
@@ -228,16 +238,15 @@ export async function getHabitConsistency(userId) {
     SELECT
       h.id,
       h.name,
-      COUNT(DISTINCT DATE(h.last_completed)) as days_completed,
-      ROUND(
-        (COUNT(DISTINCT DATE(h.last_completed)) / 7.0 * 100)::numeric,
-        2
-      ) as consistency_percent
+      COUNT(DISTINCT ht.completion_date) AS days_completed,
+      ROUND((COUNT(DISTINCT ht.completion_date) / 7.0 * 100)::numeric, 2) AS consistency_percent
     FROM habits h
+    LEFT JOIN habit_tracking ht
+      ON ht.habit_id = h.id
+      AND ht.completion_date >= CURRENT_DATE - INTERVAL '6 days'
     WHERE h.user_id = $1
-    AND h.last_completed >= NOW() - INTERVAL '7 days'
     GROUP BY h.id, h.name
-    ORDER BY consistency_percent DESC
+    ORDER BY consistency_percent DESC;
   `;
 
   const result = await db.query(query, [userId]);

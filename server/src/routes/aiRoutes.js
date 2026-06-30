@@ -3,10 +3,33 @@
  */
 
 import express from 'express';
-import AIService from '../services/aiService.js';
+import { getTobiAIResponse } from '../services/aiService.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
+
+/**
+ * POST /api/ai/chat
+ * AI: Chat endpoint with multi-model fallback
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'prompt is required' });
+    }
+
+    const reply = await getTobiAIResponse(prompt);
+    res.json({ success: true, reply });
+  } catch (error) {
+    console.error('[AI] Chat error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Tobi's thoughts are a bit cloudy right now. Try again in a second!" 
+    });
+  }
+});
 
 /**
  * POST /api/ai/task-breakdown

@@ -409,7 +409,7 @@ Response: 200 OK
 
 ### Firebase Integration (Optional)
 - Can verify Firebase ID tokens
-- Supports Google & Apple OAuth
+- Supports Google OAuth
 - Automatic user creation
 - Email verification ready
 

@@ -1,63 +1,81 @@
-/**
- * AI Service - Handles all Mistral-7B interactions via Hugging Face API
- * Budget-conscious: Minimal calls, caching, batching
- */
-
 import axios from 'axios';
+import 'dotenv/config';
 
-// Mistral model via Hugging Face Inference API
-const HF_API_URL = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1';
-const HF_TOKEN = process.env.HUGGING_FACE_API_KEY;
+// Multi-model fallback configuration
+const AI_MODELS = [
+  {
+    name: 'Mistral-7B-Instruct',
+    url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+    isChatModel: true
+  },
+  {
+    name: 'Google-Flan-T5-Large',
+    url: 'https://api-inference.huggingface.co/models/google/flan-t5-large',
+    isChatModel: false
+  },
+  {
+    name: 'Phi-3-Mini-Instruct',
+    url: 'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct',
+    isChatModel: true
+  }
+];
 
 // Simple in-memory cache to avoid duplicate calls (in production, use Redis)
 const cache = new Map();
 
 /**
- * Call Mistral AI via Hugging Face API
+ * Call Hugging Face API with multi-model fallback
+ * Attempts models in order, falling back on 429, 503, or timeout
  */
-async function callMistral(prompt, maxTokens = 256) {
-  if (!HF_TOKEN) {
-    throw new Error('HUGGING_FACE_API_KEY not set; cannot call Hugging Face');
-  }
-  const cacheKey = `mistral_${prompt.substring(0, 50)}`;
-  if (cache.has(cacheKey)) {
-    console.log('[AI] Cache hit:', cacheKey);
-    return cache.get(cacheKey);
-  }
+async function getTobiAIResponse(promptText) {
+  let lastError = null;
 
-  try {
-    console.log('[AI] Calling Mistral API...');
-    const response = await axios.post(
-      HF_API_URL,
-      {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: maxTokens,
-          temperature: 0.7,
-          top_p: 0.95,
-        },
-      },
-      {
+  for (const model of AI_MODELS) {
+    try {
+      console.log(`🤖 Tobi AI: Trying [${model.name}]...`);
+
+      const payload = model.isChatModel 
+        ? { inputs: "<s>[INST] " + promptText + " [/INST]" } 
+        : { inputs: promptText };
+
+      const response = await axios.post(model.url, payload, {
         headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
+          'Authorization': 'Bearer ' + process.env.HF_TOKEN,
           'Content-Type': 'application/json',
         },
-        timeout: 30000,
+        timeout: 10000
+      });
+
+      if (response.data && !response.data.error) {
+        console.log(`✅ Success with [${model.name}]!`);
+        const result = response.data;
+        let textOutput = Array.isArray(result) ? result[0].generated_text : result.generated_text;
+        
+        // Sanitize output strings
+        textOutput = textOutput
+          .replace(/<[^>]*>/g, '')
+          .replace(/\[INST\]([\s\S]*?)\[\/INST\]/g, '')
+          .trim();
+          
+        return textOutput;
+      } else if (response.data && response.data.error) {
+        throw new Error(response.data.error);
       }
-    );
 
-    const generatedText = response.data[0]?.generated_text || '';
-    const aiResponse = generatedText.replace(prompt, '').trim();
-    cache.set(cacheKey, aiResponse);
-
-    console.log('[AI] Response received');
-    return aiResponse;
-  } catch (error) {
-    console.error('[AI] Mistral API error:', error.message);
-    throw error;
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || error.message;
+      console.warn(`⚠️ [${model.name}] Failed: ${errorMsg}`);
+      lastError = errorMsg;
+    }
   }
+
+  throw new Error("All Tobi AI nodes exhausted. Last error: " + lastError);
 }
 
+/**
+ * AI Service - Handles all Mistral-7B interactions via Hugging Face API
+ * Budget-conscious: Minimal calls, caching, batching
+ */
 class AIService {
   /**
    * AI Task Breakdown - Break down complex tasks using Mistral
@@ -73,7 +91,7 @@ Details: "${taskDescription}"
 Return as JSON array only:
 [{"title":"Subtask 1","estimatedMinutes":15}]`;
 
-      const response = await callMistral(prompt, 300);
+      const response = await getTobiAIResponse(prompt);
       const subtasks = JSON.parse(response);
       
       return {
@@ -108,7 +126,7 @@ Return as JSON array only:
 Return 4-6 milestones with week numbers, tasks, and reasoning.
 Format: [{"week":1,"milestone":"Name","tasks":["Task 1"],"reasoning":"Why"}]`;
 
-      const response = await callMistral(prompt, 500);
+      const response = await getTobiAIResponse(prompt);
       const plan = JSON.parse(response);
       
       return { plan, aiGenerated: true };
@@ -135,7 +153,7 @@ Format: [{"week":1,"milestone":"Name","tasks":["Task 1"],"reasoning":"Why"}]`;
 
 Give brief empathetic analysis and ONE actionable step.`;
 
-      const response = await callMistral(prompt, 200);
+      const response = await getTobiAIResponse(prompt);
       
       return {
         analysis: response,
@@ -163,7 +181,7 @@ Timeframe: ${timeframe}
 
 Return JSON: [{"step":1,"title":"Step","description":"What","metrics":"How to measure"}]`;
 
-      const response = await callMistral(prompt, 400);
+      const response = await getTobiAIResponse(prompt);
       const steps = JSON.parse(response);
       
       return { steps, aiGenerated: true };
@@ -451,4 +469,5 @@ Return JSON: [{"step":1,"title":"Step","description":"What","metrics":"How to me
   }
 }
 
+export { getTobiAIResponse };
 export default AIService;

@@ -63,6 +63,9 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/clouds/
+    - assets/blobs/
+    - assets/background/
     - assets/lottie/
     - assets/dream_me_background.png
     - assets/tobi_animations/

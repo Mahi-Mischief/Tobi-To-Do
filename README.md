@@ -77,7 +77,7 @@ Every feature belongs to exactly ONE of these:
 - Avatar & customization
 - Achievements & skill tree
 - Dark mode toggle
-- Integrations (Google, Apple)
+- Integrations (Google)
 - Data export
 
 ---
@@ -134,7 +134,7 @@ This section calls out every major screen, panel, button, and interaction so you
 - Reset button: restores defaults.
 - Account section: email, plan type; buttons for sign out and data export.
 - Theme toggle: light/dark.
-- Integrations: Google/Apple placeholders.
+- Integrations: Google placeholder.
 
 ### Assist (AI Panel)
 - Quick actions: “Break down task”, “Schedule my day”, “Motivate me”.
@@ -222,7 +222,7 @@ This section calls out every major screen, panel, button, and interaction so you
 - [x] Tobi AI floating widget
 
 ### Phase 2 Features 🔄
-- [ ] Firebase OAuth (Google, Apple sign-in)
+- [ ] Firebase OAuth (Google sign-in)
 - [ ] Habit tracking UI
 - [ ] Goal management screens
 - [ ] Analytics visualization
@@ -239,7 +239,7 @@ This section calls out every major screen, panel, button, and interaction so you
 
 ### Phase 4+ Features 🚀
 - [ ] Push notifications (FCM)
-- [ ] Calendar sync (Google, Apple)
+- [ ] Calendar sync (Google)
 - [ ] Team collaboration
 - [ ] Leaderboards
 - [ ] Advanced analytics
