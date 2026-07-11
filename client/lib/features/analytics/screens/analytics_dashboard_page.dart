@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/spacing.dart';
@@ -21,6 +22,10 @@ class AnalyticsDashboardPage extends StatefulWidget {
 
 class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
   String _selectedPeriod = 'Weekly';
+  SharedPreferences? _prefs;
+  static const _prefsCardOrderKey = 'analytics_card_order';
+  static const _prefsVisibilityKey = 'analytics_card_visibility';
+
   final Map<String, bool> _visibility = {
     'productivity': true,
     'tasks': true,
@@ -318,12 +323,55 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     setState(() => _visibility[key] = !(_visibility[key] ?? true));
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCardPreferences();
+  }
+
+  Future<void> _loadCardPreferences() async {
+    _prefs ??= await SharedPreferences.getInstance();
+    final order = _prefs?.getStringList(_prefsCardOrderKey);
+    final visibility = _prefs?.getStringList(_prefsVisibilityKey);
+    if (order != null && order.length == _cardOrder.length && order.toSet().containsAll(_cardOrder)) {
+      setState(() {
+        _cardOrder
+          ..clear()
+          ..addAll(order);
+      });
+    }
+    if (visibility != null) {
+      final loaded = visibility
+          .map((entry) {
+            final parts = entry.split(':');
+            if (parts.length != 2) return null;
+            return MapEntry(parts[0], parts[1] == 'true');
+          })
+          .whereType<MapEntry<String, bool>>()
+          .toList();
+      setState(() {
+        for (final entry in loaded) {
+          if (_visibility.containsKey(entry.key)) {
+            _visibility[entry.key] = entry.value;
+          }
+        }
+      });
+    }
+  }
+
+  Future<void> _saveCardPreferences() async {
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs?.setStringList(_prefsCardOrderKey, _cardOrder);
+    await _prefs?.setStringList(_prefsVisibilityKey, _visibility.entries.map((e) => '${e.key}:${e.value}').toList());
+  }
+
   void _reorderCards(int oldIndex, int newIndex) {
     setState(() {
       if (newIndex > oldIndex) newIndex -= 1;
       final item = _cardOrder.removeAt(oldIndex);
       _cardOrder.insert(newIndex, item);
     });
+    _saveCardPreferences();
   }
 
   void _openManageSheet() {
@@ -398,6 +446,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
                               final current = _visibility[_cardOrder[i]] ?? true;
                               setSheetState(() => _visibility[_cardOrder[i]] = !current);
                               setState(() {});
+                              _saveCardPreferences();
                             },
                           ),
                       ],

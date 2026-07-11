@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tobi_todo/core/theme/app_colors.dart';
+import 'package:tobi_todo/core/theme/spacing.dart';
+import 'package:tobi_todo/features/analytics/screens/monthly_habit_tracker_page.dart';
+import 'package:tobi_todo/features/plan/widgets/add_task_dialog.dart';
 import 'package:tobi_todo/models/task_model.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
+import 'package:tobi_todo/providers/task_provider.dart';
 
 enum _TaskFilter { all, today, overdue, upcoming, week, month }
 enum TaskView { list, matrix, kanban }
@@ -133,9 +137,21 @@ class _PlanScreenState extends ConsumerState<PlanScreen> with SingleTickerProvid
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: _TaskViewToggle(
-            active: view,
-            onChanged: (v) => ref.read(taskViewPreferenceProvider.notifier).setView(v),
+          child: Row(
+            children: [
+              Expanded(
+                child: _TaskViewToggle(
+                  active: view,
+                  onChanged: (v) => ref.read(taskViewPreferenceProvider.notifier).setView(v),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              ElevatedButton.icon(
+                onPressed: () => showDialog(context: context, builder: (_) => const AddTaskDialog()),
+                icon: const Icon(Icons.add),
+                label: const Text('Add task'),
+              ),
+            ],
           ),
         ),
         Expanded(
@@ -521,107 +537,12 @@ class _StatusChip extends StatelessWidget {
 }
 
 // Habits tab
-class _HabitsTab extends ConsumerWidget {
+class _HabitsTab extends StatelessWidget {
   const _HabitsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final habits = ref.watch(habitTrackerProvider);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: () => _showHabitDialog(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('Add habit'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () => _showHabitDialog(context, ref, isBad: true),
-                icon: const Icon(Icons.block),
-                label: const Text('Add bad habit'),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: habits.length,
-            itemBuilder: (context, index) {
-              final habit = habits[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(habit.title, style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(width: 8),
-                          if (habit.isBad) const Chip(label: Text('Bad habit')),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _HabitGrid(habit: habit),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showHabitDialog(BuildContext context, WidgetRef ref, {bool isBad = false}) async {
-    final controller = TextEditingController();
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(isBad ? 'Add bad habit' : 'Add habit'),
-        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Name')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(habitTrackerProvider.notifier).addHabit(controller.text, isBad: isBad);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HabitGrid extends ConsumerWidget {
-  final HabitEntry habit;
-  const _HabitGrid({required this.habit});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final start = DateTime.now().subtract(const Duration(days: 6));
-    final days = List.generate(7, (i) => start.add(Duration(days: i)));
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: days.map((d) {
-        final key = _dateKey(d);
-        final done = habit.completedDates.contains(key);
-        return FilterChip(
-          label: Text(DateFormat('E').format(d)),
-          selected: done,
-          onSelected: (_) => ref.read(habitTrackerProvider.notifier).toggle(habit.id, key),
-        );
-      }).toList(),
-    );
+  Widget build(BuildContext context) {
+    return const MonthlyHabitTrackerWidget();
   }
 }
 
@@ -885,96 +806,6 @@ class _InvolvementTab extends ConsumerWidget {
 }
 
 // Providers and state notifiers
-final taskBoardProvider = NotifierProvider<TaskBoardNotifier, List<Task>>(TaskBoardNotifier.new);
-
-class TaskBoardNotifier extends Notifier<List<Task>> {
-  @override
-  List<Task> build() {
-    return [
-          Task(
-            id: 't1',
-            userId: 'demo',
-            title: 'Finish chemistry lab',
-            description: 'Lab report submission',
-            dueDate: DateTime.now().add(const Duration(hours: 6)),
-            priority: TaskPriority.high,
-            category: 'school',
-            status: TaskStatus.todo,
-            completed: false,
-            createdAt: DateTime.now().subtract(const Duration(days: 1)),
-            updatedAt: DateTime.now(),
-          ),
-          Task(
-            id: 't2',
-            userId: 'demo',
-            title: 'Outline history essay',
-            description: 'Draft outline',
-            dueDate: DateTime.now().add(const Duration(days: 2)),
-            priority: TaskPriority.medium,
-            category: 'essay',
-            status: TaskStatus.inProgress,
-            completed: false,
-            createdAt: DateTime.now().subtract(const Duration(days: 2)),
-            updatedAt: DateTime.now(),
-          ),
-          Task(
-            id: 't3',
-            userId: 'demo',
-            title: 'Weekly review',
-            description: 'Plan next week',
-            dueDate: DateTime.now().add(const Duration(days: 5)),
-            priority: TaskPriority.low,
-            category: 'planning',
-            status: TaskStatus.todo,
-            completed: false,
-            createdAt: DateTime.now().subtract(const Duration(days: 3)),
-            updatedAt: DateTime.now(),
-          ),
-          Task(
-            id: 't4',
-            userId: 'demo',
-            title: 'CS project integration',
-            description: 'Merge feature branch',
-            dueDate: DateTime.now().add(const Duration(days: 1)),
-            priority: TaskPriority.high,
-            category: 'project',
-            status: TaskStatus.inProgress,
-            completed: false,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ];
-  }
-
-  void setStatus(String id, TaskStatus status) {
-    state = state.map((t) => t.id == id ? t.copyWith(status: status, updatedAt: DateTime.now()) : t).toList();
-  }
-
-  void toggleStatus(String id) {
-    state = state.map((t) {
-      if (t.id != id) return t;
-      final next = t.status == TaskStatus.completed
-          ? TaskStatus.todo
-          : t.status == TaskStatus.todo
-              ? TaskStatus.inProgress
-              : TaskStatus.completed;
-      return t.copyWith(status: next, completed: next == TaskStatus.completed, updatedAt: DateTime.now());
-    }).toList();
-  }
-
-  void cycleQuadrant(String id) {
-    state = state.map((t) {
-      if (t.id != id) return t;
-      final nextPriority = t.priority == TaskPriority.high
-          ? TaskPriority.medium
-          : t.priority == TaskPriority.medium
-              ? TaskPriority.low
-              : TaskPriority.high;
-      return t.copyWith(priority: nextPriority, updatedAt: DateTime.now());
-    }).toList();
-  }
-}
-
 final taskViewPreferenceProvider = AsyncNotifierProvider<TaskViewPreferenceNotifier, TaskView>(() {
   return TaskViewPreferenceNotifier();
 });

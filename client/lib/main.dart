@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tobi_todo/core/theme/app_theme.dart';
 import 'package:tobi_todo/features/analytics/screens/analytics_dashboard_page.dart';
+import 'package:tobi_todo/features/analytics/screens/monthly_habit_tracker_page.dart';
 import 'package:tobi_todo/features/auth/screens/login_screen.dart';
 import 'package:tobi_todo/features/dashboard/screens/dashboard_screen.dart';
 import 'package:tobi_todo/features/focus/screens/focus_screen_clean.dart' as focus_clean;
@@ -26,6 +27,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/analytics',
       builder: (context, state) => const AnalyticsDashboardPage(),
+    ),
+    GoRoute(
+      path: '/habit-tracker',
+      builder: (context, state) => const MonthlyHabitTrackerPage(),
     ),
     GoRoute(
       path: '/dream-me',

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:tobi_todo/core/theme/app_theme.dart';
 import 'package:tobi_todo/features/shared/widgets/app_card.dart';
 import 'package:tobi_todo/features/shared/widgets/floating_cloud_decoration.dart';
+import 'package:tobi_todo/features/plan/widgets/add_task_dialog.dart';
 import 'package:tobi_todo/features/shared/widgets/pastel_button.dart';
 import 'package:tobi_todo/features/shared/widgets/section_header.dart';
 import 'package:tobi_todo/features/shared/widgets/xp_progress_bar.dart';
 import 'package:tobi_todo/providers/auth_provider.dart';
 import 'package:tobi_todo/providers/gamification_provider.dart';
+import 'package:tobi_todo/providers/habit_provider.dart';
 import 'package:tobi_todo/shared/services/tobi_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -102,7 +105,7 @@ class DashboardScreen extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Tasks', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                    Text('To-do', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                                     const SizedBox(height: AppSpacing.sm),
                                     _MetricRow(label: 'Due today', value: '7'),
                                     _MetricRow(label: 'Completed', value: '3'),
@@ -111,15 +114,47 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                               ),
                               AppCard(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Habits', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                                    const SizedBox(height: AppSpacing.sm),
-                                    _MetricRow(label: 'Scheduled', value: '5'),
-                                    _MetricRow(label: 'Done', value: '2'),
-                                    _MetricRow(label: 'Streak', value: '23d'),
-                                  ],
+                                child: Consumer(
+                                  builder: (context, ref, _) {
+                                    final habits = ref.watch(habitBoardProvider);
+                                    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                                    final completed = habits.where((h) => h.completions[todayKey] == true).length;
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Habits', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: AppSpacing.sm),
+                                        Column(
+                                          children: habits.map((habit) {
+                                            final checked = habit.completions[todayKey] ?? false;
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                                              child: Row(
+                                                children: [
+                                                  Checkbox(
+                                                    value: checked,
+                                                    onChanged: (_) => ref.read(habitBoardProvider.notifier).toggleCompletion(habit.id, todayKey),
+                                                  ),
+                                                  Expanded(child: Text('${habit.emoji} ${habit.name}', style: Theme.of(context).textTheme.bodyMedium)),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                        const SizedBox(height: AppSpacing.sm),
+                                        Row(
+                                          children: [
+                                            Expanded(child: Text('Today completed: $completed/${habits.length}', style: Theme.of(context).textTheme.bodySmall)),
+                                            ElevatedButton.icon(
+                                              onPressed: () => _showAddHabitDialog(context, ref),
+                                              icon: const Icon(Icons.add),
+                                              label: const Text('Add Habit'),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                               AppCard(
@@ -135,6 +170,27 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Add tasks', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                const SizedBox(height: AppSpacing.sm),
+                                Text('Quickly create a task with due date, importance, calendar options, and repeat settings.', style: Theme.of(context).textTheme.bodyMedium),
+                                const SizedBox(height: AppSpacing.sm),
+                                Row(
+                                  children: [
+                                    ElevatedButton.icon(
+                                      onPressed: () => showDialog(context: context, builder: (_) => const AddTaskDialog()),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Add task'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           gamificationStats.when(
@@ -211,6 +267,47 @@ class DashboardScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+void _showAddHabitDialog(BuildContext context, WidgetRef ref) {
+  final nameCtrl = TextEditingController();
+  String emoji = '✨';
+  bool isPositive = true;
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Add Habit'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
+          TextField(onChanged: (value) => emoji = value, decoration: const InputDecoration(labelText: 'Emoji (optional)')),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              ChoiceChip(label: const Text('Good'), selected: isPositive, onSelected: (_) => isPositive = true),
+              const SizedBox(width: AppSpacing.sm),
+              ChoiceChip(label: const Text('Bad'), selected: !isPositive, onSelected: (_) => isPositive = false),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () {
+            final id = DateTime.now().millisecondsSinceEpoch.toString();
+            ref.read(habitBoardProvider.notifier).addHabit(
+                  TrackedHabit(id: id, name: nameCtrl.text.trim(), emoji: emoji.isEmpty ? '✨' : emoji, isPositive: isPositive),
+                );
+            Navigator.of(dialogContext).pop();
+          },
+          child: const Text('Add'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Header extends StatelessWidget {
